@@ -28,6 +28,22 @@ if (settings.token && settings.url && settings.port) {
 			createLink(alltorrents[i], id);
 		}
 	}
+
+  MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+  var obs = new MutationObserver(function (mutations, observer) {
+			mutations.forEach(function(mutation) {
+				mutation.addedNodes.forEach(function(node){
+					if (linkregex.exec(node.querySelector('a'))) {
+						id = RegExp.$1;
+						createLink(node.querySelector('a'), id);
+					}
+				});
+			});
+  });
+
+  obs.observe(document.querySelectorAll('#torrent_table > tbody')[0], {
+    childList: true,
+  });
 }
 
 if (settingsPage) {
