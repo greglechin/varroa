@@ -36,7 +36,7 @@ Loop:
 		case "stats":
 			go func() {
 				if err := generateStats(); err != nil {
-					logThis(errorGeneratingGraphs, NORMAL)
+					logThis(errorGeneratingGraphs+err.Error(), NORMAL)
 				}
 			}()
 		case "stop":
@@ -54,10 +54,7 @@ Loop:
 
 func generateStats() error {
 	logThis("- generating stats", VERBOSE)
-	if err := history.GenerateGraphs(); err != nil {
-		return err
-	}
-	return nil
+	return history.GenerateGraphs()
 }
 
 func loadConfiguration() error {
@@ -73,7 +70,8 @@ func loadConfiguration() error {
 	// if server up
 	if server.Addr != "" {
 		// shut down gracefully, but wait no longer than 5 seconds before halting
-		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
 		if err := server.Shutdown(ctx); err != nil {
 			logThis(errorShuttingDownServer+err.Error(), NORMAL)
 		}

@@ -44,7 +44,7 @@ func waitUntilExists(path string) error {
 		if !DirectoryExists(path) {
 			if cpt < timeoutDownloadFolderCreation {
 				time.Sleep(1 * time.Second)
-				cpt += 1
+				cpt++
 			} else {
 				err = errors.New(errorWaitingForDownload)
 				keepScanning = false

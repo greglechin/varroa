@@ -66,10 +66,10 @@ func webServer() {
 			id, ok := mux.Vars(r)["id"]
 			if !ok {
 				// if it's not in URL, try to get from query parameters
-				queryID, ok_ := queryParameters["id"]
-				if !ok_ {
+				queryID, ok2 := queryParameters["id"]
+				if !ok2 {
 					logThis(errorNoID, NORMAL)
-					w.WriteHeader(http.StatusUnauthorized) // TODO find better code?
+					w.WriteHeader(http.StatusUnauthorized) // TODO find better status code?
 					return
 				}
 				id = queryID[0]

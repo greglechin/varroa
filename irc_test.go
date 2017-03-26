@@ -125,7 +125,7 @@ func TestRegexp(t *testing.T) {
 						fmt.Println("=> triggers " + f.label + " (UNexpected!)")
 					}
 					verify.True(found)
-					satisfied += 1
+					satisfied++
 				}
 			}
 			verify.Equal(len(announced.satisfiedFilters), satisfied)
