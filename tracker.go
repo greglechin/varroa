@@ -139,12 +139,12 @@ func (t *GazelleTracker) get(url string) ([]byte, error) {
 	if err != nil {
 		logThis(errorJSONAPI+err.Error(), NORMAL)
 		// if error, try once again after logging in again
-		if err := t.Login(conf.user, conf.password); err == nil {
-			data, err := callJSONAPI(t.client, url)
-			if err != nil {
-				return nil, err
+		if loginErr := t.Login(conf.user, conf.password); loginErr == nil {
+			data2, callErr := callJSONAPI(t.client, url)
+			if callErr != nil {
+				return nil, callErr
 			}
-			return data, err
+			return data2, callErr
 		} else {
 			return nil, errors.New("Could not log in and send get request to " + url)
 		}
@@ -188,8 +188,8 @@ func (t *GazelleTracker) GetStats() (*TrackerStats, error) {
 		return nil, errors.New(errorJSONAPI + err.Error())
 	}
 	var s GazelleUserStats
-	if err := json.Unmarshal(data, &s); err != nil {
-		return nil, errors.New(errorUnmarshallingJSON + err.Error())
+	if unmarshalErr := json.Unmarshal(data, &s); unmarshalErr != nil {
+		return nil, errors.New(errorUnmarshallingJSON + unmarshalErr.Error())
 	}
 	ratio, err := strconv.ParseFloat(s.Response.Stats.Ratio, 64)
 	if err != nil {
@@ -215,8 +215,8 @@ func (t *GazelleTracker) GetTorrentInfo(id string) (*TrackerTorrentInfo, error) 
 		return nil, errors.New(errorJSONAPI + err.Error())
 	}
 	var gt GazelleTorrent
-	if err := json.Unmarshal(data, &gt); err != nil {
-		return nil, errors.New(errorUnmarshallingJSON + err.Error())
+	if unmarshalErr := json.Unmarshal(data, &gt); unmarshalErr != nil {
+		return nil, errors.New(errorUnmarshallingJSON + unmarshalErr.Error())
 	}
 
 	artists := []string{}

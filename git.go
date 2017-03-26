@@ -133,9 +133,8 @@ func (g *Git) AddRemote(remoteName, remoteURL string) error {
 	if err == nil {
 		// activate credential storing
 		credentials := fmt.Sprintf("%s/.git-credentials", g.currentPath)
-		_, err := exec.Command(git, "config", "credential.helper", fmt.Sprintf("store --file=%s", credentials)).CombinedOutput()
-		if err != nil {
-			return err
+		if _, cmdErr := exec.Command(git, "config", "credential.helper", fmt.Sprintf("store --file=%s", credentials)).CombinedOutput(); cmdErr != nil {
+			return cmdErr
 		}
 	}
 	return err
