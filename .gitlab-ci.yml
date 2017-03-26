@@ -7,48 +7,64 @@ image: golang:latest
 # repository in /go/src/mydomainperso.com/repos/projectname 
 # Thus, making a symbolic link corrects this.
 before_script:
-    - ln -s /builds /go/src/gitlab.com
-    - cd /go/src/gitlab.com/passelecasque/varroa
+  - ln -s /builds /go/src/gitlab.com
+  - cd /go/src/gitlab.com/passelecasque/varroa
 
 stages:
-    - test
-    - build
+  - test
+  - build
 
 format:
-    stage: test
-    script:
-        # Add here all the dependencies, or use glide/govendor to get
-        # them automatically.
-        - go get github.com/docopt/docopt-go
-        - go get github.com/spf13/viper
-        - go get github.com/wcharczuk/go-chart
-        - go get github.com/thoj/go-ircevent
-        - go get github.com/stretchr/testify/assert
-        - go get github.com/gregdel/pushover
-        - go get github.com/dustin/go-humanize
-        - go get github.com/gorilla/mux
-        - go get golang.org/x/net/publicsuffix
-        - go get github.com/sevlyar/go-daemon
+  stage: test
+  script:
+    - go get github.com/docopt/docopt-go
+    - go get github.com/spf13/viper
+    - go get github.com/wcharczuk/go-chart
+    - go get github.com/thoj/go-ircevent
+    - go get github.com/stretchr/testify/assert
+    - go get github.com/gregdel/pushover
+    - go get github.com/dustin/go-humanize
+    - go get github.com/gorilla/mux
+    - go get golang.org/x/net/publicsuffix
+    - go get github.com/sevlyar/go-daemon
         # - go tool vet -composites=false -shadow=true *.go
-        #- go vet
-        - go test -race $(go list ./... | grep -v /vendor/)
+    - go test -race $(go list ./... | grep -v /vendor/)
 
-compile:
-    stage: build
-    script:
-        # Add here all the dependencies, or use glide/govendor/...
-        # to get them automatically.
-        - go get github.com/docopt/docopt-go
-        - go get github.com/spf13/viper
-        - go get github.com/wcharczuk/go-chart
-        - go get github.com/thoj/go-ircevent
-        - go get github.com/stretchr/testify/assert
-        - go get github.com/gregdel/pushover
-        - go get github.com/dustin/go-humanize
-        - go get github.com/gorilla/mux
-        - go get golang.org/x/net/publicsuffix
-        - go get github.com/sevlyar/go-daemon
-        - go build -race -ldflags "-extldflags '-static'" -o varroa
-    artifacts:
-        paths:
-            - varroa
+build-commits:
+  stage: build
+  script:
+    - go get github.com/docopt/docopt-go
+    - go get github.com/spf13/viper
+    - go get github.com/wcharczuk/go-chart
+    - go get github.com/thoj/go-ircevent
+    - go get github.com/stretchr/testify/assert
+    - go get github.com/gregdel/pushover
+    - go get github.com/dustin/go-humanize
+    - go get github.com/gorilla/mux
+    - go get golang.org/x/net/publicsuffix
+    - go get github.com/sevlyar/go-daemon
+    - go build -race -ldflags "-extldflags '-static'" -o varroa
+  except:
+    - tags  
+    
+build-releases:
+  stage: build
+  script:
+    - go get github.com/docopt/docopt-go
+    - go get github.com/spf13/viper
+    - go get github.com/wcharczuk/go-chart
+    - go get github.com/thoj/go-ircevent
+    - go get github.com/stretchr/testify/assert
+    - go get github.com/gregdel/pushover
+    - go get github.com/dustin/go-humanize
+    - go get github.com/gorilla/mux
+    - go get golang.org/x/net/publicsuffix
+    - go get github.com/sevlyar/go-daemon
+    - go build -race -ldflags "-extldflags '-static'" -o varroa
+  artifacts:
+    paths: 
+    - varroa
+    name: "$CI_COMMIT_REF_NAME"
+  only:
+    - tags    
+            
