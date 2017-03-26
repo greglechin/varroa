@@ -62,7 +62,8 @@ build-releases:
     - go get github.com/sevlyar/go-daemon
     - go build -race -ldflags "-extldflags '-static'" -o varroa
   artifacts:
-    paths: varroa
+    paths: 
+    - varroa
     name: "$CI_COMMIT_REF_NAME"
   only:
     - tags    
