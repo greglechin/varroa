@@ -19,7 +19,16 @@ format:
     script:
         # Add here all the dependencies, or use glide/govendor to get
         # them automatically.
-        - go get -u .
+        - go get github.com/docopt/docopt-go
+        - go get github.com/spf13/viper
+        - go get github.com/wcharczuk/go-chart
+        - go get github.com/thoj/go-ircevent
+        - go get github.com/stretchr/testify/assert
+        - go get github.com/gregdel/pushover
+        - go get github.com/dustin/go-humanize
+        - go get github.com/gorilla/mux
+        - go get golang.org/x/net/publicsuffix
+        - go get github.com/sevlyar/go-daemon
         - go tool vet -composites=false -shadow=true *.go
         - go test -race $(go list ./... | grep -v /vendor/)
 
@@ -28,7 +37,16 @@ compile:
     script:
         # Add here all the dependencies, or use glide/govendor/...
         # to get them automatically.
-        - go get -u .
+        - go get github.com/docopt/docopt-go
+        - go get github.com/spf13/viper
+        - go get github.com/wcharczuk/go-chart
+        - go get github.com/thoj/go-ircevent
+        - go get github.com/stretchr/testify/assert
+        - go get github.com/gregdel/pushover
+        - go get github.com/dustin/go-humanize
+        - go get github.com/gorilla/mux
+        - go get golang.org/x/net/publicsuffix
+        - go get github.com/sevlyar/go-daemon
         - go build -race -ldflags "-extldflags '-static'" -o varroa
     artifacts:
         paths:
