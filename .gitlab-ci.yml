@@ -30,7 +30,7 @@ format:
         - go get golang.org/x/net/publicsuffix
         - go get github.com/sevlyar/go-daemon
         # - go tool vet -composites=false -shadow=true *.go
-        - go tool vet -composites=false
+        - go vet
         - go test -race $(go list ./... | grep -v /vendor/)
 
 compile:
