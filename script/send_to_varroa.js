@@ -16,6 +16,8 @@ var divider = ' | ';
 var settings = getSettings();
 var settingsPage = window.location.href.match('user.php\\?action=edit&userid=');
 var top10Page = window.location.href.match('top10.php');
+var torrentPage = window.location.href.match('torrents.php$');
+var torrentUserPage = window.location.href.match('torrents.php\?(.*)&userid');
 var linkLabel = "VM";
 if (top10Page) {
     linkLabel = "[" + linkLabel + "]";
@@ -34,22 +36,27 @@ if (settings.token && settings.url && settings.port) {
         }
     }
 
-	if(!settingsPage){
-	    MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-	    var obs = new MutationObserver(function (mutations, observer) {
-	        mutations.forEach(function (mutation) {
-	            mutation.addedNodes.forEach(function (node) {
-	                if (linkregex.exec(node.querySelector('a'))) {
-	                    id = RegExp.$1;
-	                    createLink(node.querySelector('a'), id);
-	                }
-	            });
-	        });
-	    });
+	MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+	var obs = new MutationObserver(function (mutations, observer) {
+		mutations.forEach(function (mutation) {
+			mutation.addedNodes.forEach(function (node) {
+				if (linkregex.exec(node.querySelector('a'))) {
+					id = RegExp.$1;
+					createLink(node.querySelector('a'), id);
+				}
+			});
+		});
+	});
 
-	    obs.observe(document.querySelectorAll('#torrent_table > tbody')[0], {
-	        childList: true,
-	    });
+	if (torrentPage) {
+		var obsElem = document.querySelector('#torrent_table > tbody');
+	} else if (torrentUserPage) {
+		var obsElem = document.querySelector('.torrent_table > tbody');
+	}
+	if (obsElem) {
+		obs.observe(obsElem, {
+			childList: true,
+		});
 	}
 }
 
