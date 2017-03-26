@@ -19,7 +19,7 @@ format:
     script:
         # Add here all the dependencies, or use glide/govendor to get
         # them automatically.
-        - go get -u gitlab.com/passelecasque/varroa
+        - go get -u .
         - go tool vet -composites=false -shadow=true *.go
         - go test -race $(go list ./... | grep -v /vendor/)
 
@@ -28,7 +28,7 @@ compile:
     script:
         # Add here all the dependencies, or use glide/govendor/...
         # to get them automatically.
-        - go get -u gitlab.com/passelecasque/varroa
+        - go get -u .
         - go build -race -ldflags "-extldflags '-static'" -o varroa
     artifacts:
         paths:
