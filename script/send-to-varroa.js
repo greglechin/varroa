@@ -2,6 +2,7 @@
 // @name           varroa musica
 // @namespace      varroa
 // @description    Adds a VM link for each torrent, to send directly to varroa musica.
+// @include        http*://*apollo.rip/*
 // @include        http*://*redacted.ch/*
 // @include        http*://*notwhat.cd/*
 // @version        9
