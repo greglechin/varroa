@@ -1,15 +1,11 @@
 image: golang:latest
 
+# The problem is that to be able to use go get, one needs to put # the repository in the $GOPATH. So for example if your gitlab domain # is mydomainperso.com, and that your repository is repos/projectname, and # the default GOPATH being /go, then you'd need to have your # repository in /go/src/mydomainperso.com/repos/projectname # Thus, making a symbolic link corrects this.
 before_script:
+  - ln -s /builds /go/src/gitlab.com
+  - cd /go/src/gitlab.com/passelecasque/varroa
   - go get -u github.com/golang/dep/cmd/dep
-  - export GOPATH=$(dirname $CI_PROJECT_DIR)/go
-  - mkdir -p $GOPATH/src
-  - cd $GOPATH/src
-  - ln -s $CI_PROJECT_DIR
-  - cd $CI_PROJECT_NAME
   - dep ensure
-  - ls vendor/
-  - rm -R vendor/gitlab.com/passelecasque/varroa
 
 stages:
   - test
