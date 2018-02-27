@@ -4,12 +4,24 @@
 [[projects]]
   branch = "master"
   name = "bazil.org/fuse"
-  packages = [".","fs","fuseutil"]
+  packages = [
+    ".",
+    "fs",
+    "fuseutil"
+  ]
   revision = "371fbbdaa8987b715bdd21d6adc4c9b20155f748"
 
 [[projects]]
   name = "github.com/asdine/storm"
-  packages = [".","codec","codec/json","codec/msgpack","index","internal","q"]
+  packages = [
+    ".",
+    "codec",
+    "codec/json",
+    "codec/msgpack",
+    "index",
+    "internal",
+    "q"
+  ]
   revision = "68fc73b635f890fe7ba2f3b15ce80c85b28a744f"
   version = "v2.0.2"
 
@@ -46,7 +58,14 @@
 [[projects]]
   branch = "master"
   name = "github.com/dsnet/compress"
-  packages = [".","bzip2","bzip2/internal/sais","internal","internal/errors","internal/prefix"]
+  packages = [
+    ".",
+    "bzip2",
+    "bzip2/internal/sais",
+    "internal",
+    "internal/errors",
+    "internal/prefix"
+  ]
   revision = "cc9eb1d7ad760af14e8f918698f745e80377af4f"
 
 [[projects]]
@@ -76,7 +95,10 @@
 [[projects]]
   branch = "master"
   name = "github.com/golang/freetype"
-  packages = ["raster","truetype"]
+  packages = [
+    "raster",
+    "truetype"
+  ]
   revision = "e2365dfdc4a05e4b8299a783240d4a7d5a65d4e4"
 
 [[projects]]
@@ -170,12 +192,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/russross/blackfriday"
-  packages = ["."]
-  revision = "cadec560ec52d93835bf2f15bd794700d3a2473b"
-  version = "v2.0.0"
-
-[[projects]]
   name = "github.com/sevlyar/go-daemon"
   packages = ["."]
   revision = "e49ef56654f54139c4dc0285f973f74e9649e729"
@@ -201,13 +217,28 @@
 
 [[projects]]
   name = "github.com/tdewolff/minify"
-  packages = [".","css","html","js","svg"]
+  packages = [
+    ".",
+    "css",
+    "html",
+    "js",
+    "svg"
+  ]
   revision = "222672169d634c440a73abc47685074e1a9daa60"
   version = "v2.3.4"
 
 [[projects]]
   name = "github.com/tdewolff/parse"
-  packages = [".","buffer","css","html","js","strconv","svg","xml"]
+  packages = [
+    ".",
+    "buffer",
+    "css",
+    "html",
+    "js",
+    "strconv",
+    "svg",
+    "xml"
+  ]
   revision = "639f6272aec6b52094db77b9ec488214b0b4b1a1"
   version = "v2.3.2"
 
@@ -219,19 +250,30 @@
 
 [[projects]]
   name = "github.com/ulikunitz/xz"
-  packages = [".","internal/hash","internal/xlog","lzma"]
+  packages = [
+    ".",
+    "internal/hash",
+    "internal/xlog",
+    "lzma"
+  ]
   revision = "0c6b41e72360850ca4f98dc341fd999726ea007f"
   version = "v0.5.4"
 
 [[projects]]
   name = "github.com/vmihailenco/msgpack"
-  packages = ["."]
-  revision = "524b24cb24f20a81cab1c5104448036b96e7dc5d"
-  version = "v2.9.0"
+  packages = [
+    ".",
+    "codes"
+  ]
+  revision = "b83fb55e0632418103602b3b23851cabc5d11762"
+  version = "v3.2.8"
 
 [[projects]]
   name = "github.com/wcharczuk/go-chart"
-  packages = [".","drawing"]
+  packages = [
+    ".",
+    "drawing"
+  ]
   revision = "fc2973067ce43455507ea5f9aa9814aabbf8f2ca"
   version = "v2.0"
 
@@ -245,41 +287,87 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "beaf6a35706e5032ae4c3fcf342c663c069f44d2"
+  revision = "8c653846df49742c4c85ec37e5d9f8d3ba657895"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/image"
-  packages = ["draw","font","math/f64","math/fixed"]
+  packages = [
+    "draw",
+    "font",
+    "math/f64",
+    "math/fixed"
+  ]
   revision = "12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","idna","publicsuffix"]
+  packages = [
+    "context",
+    "idna",
+    "publicsuffix"
+  ]
   revision = "cbe0f9307d0156177f9dd5dc85da1a31abc5f2fb"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "f6cff0780e542efa0c8e864dc8fa522808f6a598"
 
 [[projects]]
   name = "golang.org/x/text"
-  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable"
+  ]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
 
 [[projects]]
   name = "google.golang.org/appengine"
-  packages = [".","datastore","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api"]
+  packages = [
+    ".",
+    "datastore",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api"
+  ]
   revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
   version = "v1.0.0"
 
 [[projects]]
+  name = "gopkg.in/russross/blackfriday.v2"
+  packages = ["."]
+  revision = "cadec560ec52d93835bf2f15bd794700d3a2473b"
+  version = "v2.0.0"
+
+[[projects]]
   name = "gopkg.in/vmihailenco/msgpack.v2"
-  packages = [".","codes"]
+  packages = [
+    ".",
+    "codes"
+  ]
   revision = "f4f8982de4ef0de18be76456617cc3f5d8d8141e"
   version = "v2.9.1"
 
@@ -292,6 +380,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7982b9e10807d3a90972154a6d57fc294deaed3d58268441be32ec11f84d6439"
+  inputs-digest = "20f162e9e49f43f85d9e30776cb3c15c0d7b9fae245bf6f03567b6b7b46d998e"
   solver-name = "gps-cdcl"
   solver-version = 1

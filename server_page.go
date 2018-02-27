@@ -8,7 +8,7 @@ import (
 
 	"github.com/asdine/storm"
 	"github.com/pkg/errors"
-	"github.com/russross/blackfriday"
+	"gopkg.in/russross/blackfriday.v2"
 )
 
 // adapted from https://purecss.io/layouts/side-menu/
@@ -247,7 +247,7 @@ func (sc *ServerPage) DownloadsInfo(e *Environment, downloads *Downloads, id str
 	if dl.HasTrackerMetadata {
 		// TODO if more than 1 tracker, make things prettier
 		for _, t := range dl.Tracker {
-			sc.index.DownloadInfo += template.HTML(blackfriday.MarkdownCommon(dl.getDescription(e.config.General.DownloadDir, t)))
+			sc.index.DownloadInfo += template.HTML(blackfriday.Run(dl.getDescription(e.config.General.DownloadDir, t)))
 		}
 	} else {
 		sc.index.DownloadInfo = template.HTML(dl.RawShortString())
