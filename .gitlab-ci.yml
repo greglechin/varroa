@@ -8,6 +8,8 @@ before_script:
   - ln -s $CI_PROJECT_DIR
   - cd $CI_PROJECT_NAME
   - dep ensure
+  - ls vendor/
+  - rm -R vendor/gitlab.com/passelecasque/varroa
 
 stages:
   - test
