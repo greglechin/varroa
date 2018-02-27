@@ -17,7 +17,8 @@ format:
   stage: test
   script:
     - go tool vet -composites=false -shadow=true *.go
-    - go test -race $(go list ./... | grep -v /vendor/)
+    - go test
+  #  - go test -race $(go list ./... | grep -v /vendor/)
 
 compiled_varroa_dev:
   stage: build
