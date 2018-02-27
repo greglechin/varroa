@@ -9,6 +9,8 @@ image: golang:latest
 before_script:
   - ln -s /builds /go/src/gitlab.com
   - cd /go/src/gitlab.com/passelecasque/varroa
+  - go get -u github.com/golang/dep/cmd/dep
+  - dep ensure -update
 
 stages:
   - test
@@ -17,68 +19,12 @@ stages:
 format:
   stage: test
   script:
-    - go get github.com/docopt/docopt-go
-    - go get github.com/wcharczuk/go-chart
-    - go get gitlab.com/passelecasque/go-ircevent
-    - go get github.com/stretchr/testify/assert
-    - go get github.com/gregdel/pushover
-    - go get github.com/dustin/go-humanize
-    - go get github.com/gorilla/mux
-    - go get github.com/gorilla/websocket
-    - go get gopkg.in/vmihailenco/msgpack.v2
-    - go get golang.org/x/net/publicsuffix
-    - go get github.com/sevlyar/go-daemon
-    - go get github.com/subosito/norma
-    - go get github.com/goji/httpauth
-    - go get github.com/jasonlvhit/gocron
-    - go get github.com/mholt/archiver
-    - go get github.com/howeyc/gopass
-    - go get gopkg.in/yaml.v2
-    - go get github.com/pkg/errors
-    - go get github.com/ttacon/chalk
-    - go get github.com/tdewolff/minify
-    - go get github.com/briandowns/spinner
-    - go get github.com/fhs/gompd/mpd
-    - go get github.com/russross/blackfriday
-    - go get github.com/asdine/storm
-    - go get bazil.org/fuse
-    - go get golang.org/x/net/context
-    - go get github.com/jinzhu/now
-    - go get github.com/vmihailenco/msgpack
     - go tool vet -composites=false -shadow=true *.go
     - go test -race $(go list ./... | grep -v /vendor/)
 
 compiled_varroa_dev:
   stage: build
   script:
-    - go get github.com/docopt/docopt-go
-    - go get github.com/wcharczuk/go-chart
-    - go get gitlab.com/passelecasque/go-ircevent
-    - go get github.com/stretchr/testify/assert
-    - go get github.com/gregdel/pushover
-    - go get github.com/dustin/go-humanize
-    - go get github.com/gorilla/mux
-    - go get github.com/gorilla/websocket
-    - go get gopkg.in/vmihailenco/msgpack.v2
-    - go get golang.org/x/net/publicsuffix
-    - go get github.com/sevlyar/go-daemon
-    - go get github.com/subosito/norma
-    - go get github.com/goji/httpauth
-    - go get github.com/jasonlvhit/gocron
-    - go get github.com/mholt/archiver
-    - go get github.com/howeyc/gopass
-    - go get gopkg.in/yaml.v2
-    - go get github.com/pkg/errors
-    - go get github.com/ttacon/chalk
-    - go get github.com/tdewolff/minify
-    - go get github.com/briandowns/spinner
-    - go get github.com/fhs/gompd/mpd
-    - go get github.com/russross/blackfriday
-    - go get github.com/asdine/storm
-    - go get bazil.org/fuse
-    - go get golang.org/x/net/context
-    - go get github.com/jinzhu/now
-    - go get github.com/vmihailenco/msgpack
     - cd cmd/varroa
     - go build -o ../../varroa
     - cd ../varroa-fuse
@@ -97,34 +43,6 @@ compiled_varroa_dev:
 compiled_varroa_released_version:
   stage: build
   script:
-    - go get github.com/docopt/docopt-go
-    - go get github.com/wcharczuk/go-chart
-    - go get gitlab.com/passelecasque/go-ircevent
-    - go get github.com/stretchr/testify/assert
-    - go get github.com/gregdel/pushover
-    - go get github.com/dustin/go-humanize
-    - go get github.com/gorilla/mux
-    - go get github.com/gorilla/websocket
-    - go get gopkg.in/vmihailenco/msgpack.v2
-    - go get golang.org/x/net/publicsuffix
-    - go get github.com/sevlyar/go-daemon
-    - go get github.com/subosito/norma
-    - go get github.com/goji/httpauth
-    - go get github.com/jasonlvhit/gocron
-    - go get github.com/mholt/archiver
-    - go get github.com/howeyc/gopass
-    - go get gopkg.in/yaml.v2
-    - go get github.com/pkg/errors
-    - go get github.com/ttacon/chalk
-    - go get github.com/tdewolff/minify
-    - go get github.com/briandowns/spinner
-    - go get github.com/fhs/gompd/mpd
-    - go get github.com/russross/blackfriday
-    - go get github.com/asdine/storm
-    - go get bazil.org/fuse
-    - go get golang.org/x/net/context
-    - go get github.com/jinzhu/now
-    - go get github.com/vmihailenco/msgpack
     - cd cmd/varroa
     - go build -o ../../varroa
     - cd ../varroa-fuse

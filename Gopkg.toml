@@ -1,0 +1,126 @@
+
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+
+[[constraint]]
+  branch = "master"
+  name = "bazil.org/fuse"
+
+[[constraint]]
+  name = "github.com/asdine/storm"
+  version = "2.0.2"
+
+[[constraint]]
+  name = "github.com/briandowns/spinner"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/docopt/docopt-go"
+  version = "0.6.2"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/dustin/go-humanize"
+
+[[constraint]]
+  name = "github.com/fhs/gompd"
+  version = "2.0.2"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/goji/httpauth"
+
+[[constraint]]
+  name = "github.com/gorilla/mux"
+  version = "1.6.1"
+
+[[constraint]]
+  name = "github.com/gorilla/websocket"
+  version = "1.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gregdel/pushover"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/howeyc/gopass"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/jasonlvhit/gocron"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/jinzhu/now"
+
+[[constraint]]
+  name = "github.com/mholt/archiver"
+  version = "2.0.0"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"
+
+[[constraint]]
+  name = "github.com/russross/blackfriday"
+  version = "2.0.0"
+
+[[constraint]]
+  name = "github.com/sevlyar/go-daemon"
+  version = "0.1.2"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.2.1"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/subosito/norma"
+
+[[constraint]]
+  name = "github.com/tdewolff/minify"
+  version = "2.3.4"
+
+[[constraint]]
+  name = "github.com/ttacon/chalk"
+  version = "0.1.0"
+
+[[constraint]]
+  name = "github.com/wcharczuk/go-chart"
+  version = "2.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "gitlab.com/passelecasque/go-ircevent"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[constraint]]
+  name = "gopkg.in/vmihailenco/msgpack.v2"
+  version = "2.9.1"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.1.1"
