@@ -7,7 +7,7 @@ before_script:
   - cd $GOPATH/src
   - ln -s $CI_PROJECT_DIR
   - cd $CI_PROJECT_NAME
-  - dep ensure -update
+  - dep ensure
 
 stages:
   - test
@@ -24,11 +24,10 @@ compiled_varroa_dev:
   stage: build
   script:
     - cd cmd/varroa
-    - go build -o ../../varroa
+    - go build -v -o ../../varroa
     - cd ../varroa-fuse
-    - go build -o ../../varroa-fuse
+    - go build -v -o ../../varroa-fuse
     - cd ../..
-#    - go build -race -ldflags "-extldflags '-static'" -o varroa
   artifacts:
     paths:
     - varroa
