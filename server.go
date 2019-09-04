@@ -15,6 +15,7 @@ import (
 	"github.com/sevlyar/go-daemon"
 	"gitlab.com/catastrophic/assistance/fs"
 	"gitlab.com/catastrophic/assistance/logthis"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 const (
@@ -51,25 +52,24 @@ type OutgoingJSON struct {
 }
 
 // TODO: see if this could also be used by irc
-func manualSnatchFromID(e *Environment, tracker *GazelleTracker, id string, useFLToken bool) (*Release, error) {
+func manualSnatchFromID(e *Environment, t *tracker.Gazelle, id string, useFLToken bool) (*Release, error) {
 	stats, err := NewStatsDB(filepath.Join(StatsDir, DefaultHistoryDB))
 	if err != nil {
 		return nil, errors.Wrap(err, "could not access the stats database")
 	}
-
 	// get torrent info
-	info, err := tracker.GetTorrentMetadata(id)
-	if err != nil {
+	info := &TrackerMetadata{}
+	if err := info.LoadFromID(t, id); err != nil {
 		logthis.Info(errorCouldNotGetTorrentInfo, logthis.NORMAL)
 		return nil, err // probably the ID does not exist
 	}
 	release := info.Release()
 	if release == nil {
 		logthis.Info("Error parsing Torrent Info", logthis.NORMAL)
-		release = &Release{Tracker: tracker.Name, TorrentID: id}
+		release = &Release{Tracker: t.Name, TorrentID: id}
 	}
 	logthis.Info("Downloading torrent "+release.ShortString(), logthis.NORMAL)
-	if err := tracker.DownloadTorrentFromID(id, e.config.General.WatchDir, useFLToken); err != nil {
+	if err := t.DownloadTorrentFromID(id, e.config.General.WatchDir, useFLToken); err != nil {
 		logthis.Error(errors.Wrap(err, errorDownloadingTorrent+id), logthis.NORMAL)
 		return release, err
 	}
@@ -81,9 +81,9 @@ func manualSnatchFromID(e *Environment, tracker *GazelleTracker, id string, useF
 	// save metadata
 	if e.config.General.AutomaticMetadataRetrieval {
 		if daemon.WasReborn() {
-			go info.SaveFromTracker(filepath.Join(e.config.General.DownloadDir, info.FolderName), tracker)
+			go info.SaveFromTracker(filepath.Join(e.config.General.DownloadDir, info.FolderName), t)
 		} else {
-			info.SaveFromTracker(filepath.Join(e.config.General.DownloadDir, info.FolderName), tracker)
+			info.SaveFromTracker(filepath.Join(e.config.General.DownloadDir, info.FolderName), t)
 		}
 	}
 	return release, nil
@@ -280,8 +280,10 @@ func webServer(e *Environment) {
 						// TODO differentiate info / error
 						if err := c.WriteJSON(OutgoingJSON{Status: responseInfo, Message: messageToLog.(string), Target: notificationArea}); err != nil {
 							if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-								logthis.Error(errors.Wrap(err, errorIncomingWebSocketJSON), logthis.VERBOSEST)
+								logthis.Error(errors.Wrap(err, errorOutgoingWebSocketJSON), logthis.VERBOSEST)
 							}
+							endThisConnection <- struct{}{}
+							break
 						}
 						mutex.Unlock()
 					case <-endThisConnection:
@@ -343,8 +345,10 @@ func webServer(e *Environment) {
 				mutex.Lock()
 				if err := c.WriteJSON(answer); err != nil {
 					if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-						logthis.Error(errors.Wrap(err, errorIncomingWebSocketJSON), logthis.VERBOSEST)
+						logthis.Error(errors.Wrap(err, errorOutgoingWebSocketJSON+" (answer)"), logthis.VERBOSEST)
 					}
+					endThisConnection <- struct{}{}
+					break
 				}
 				mutex.Unlock()
 			}

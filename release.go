@@ -13,6 +13,7 @@ import (
 	"gitlab.com/catastrophic/assistance/intslice"
 	"gitlab.com/catastrophic/assistance/logthis"
 	"gitlab.com/catastrophic/assistance/strslice"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 const (
@@ -61,7 +62,7 @@ type Release struct {
 	Filter      string
 }
 
-func NewRelease(tracker string, parts []string, alternative bool) (*Release, error) {
+func NewRelease(trackerName string, parts []string, alternative bool) (*Release, error) {
 	if len(parts) != 19 {
 		return nil, errors.New("incomplete announce information")
 	}
@@ -114,23 +115,23 @@ func NewRelease(tracker string, parts []string, alternative bool) (*Release, err
 
 	// checks
 	releaseType := parts[4]
-	if !strslice.Contains(knownReleaseTypes, releaseType) {
+	if !strslice.Contains(tracker.KnownReleaseTypes, releaseType) {
 		return nil, errors.New("Unknown release type: " + releaseType)
 	}
 	format := parts[5]
-	if !strslice.Contains(knownFormats, format) {
+	if !strslice.Contains(tracker.KnownFormats, format) {
 		return nil, errors.New("Unknown format: " + format)
 	}
 	source := parts[13]
-	if !strslice.Contains(knownSources, source) {
+	if !strslice.Contains(tracker.KnownSources, source) {
 		return nil, errors.New("Unknown source: " + source)
 	}
 	quality := parts[6]
-	if !strslice.Contains(knownQualities, quality) {
+	if !strslice.Contains(tracker.KnownQualities, quality) {
 		return nil, errors.New("Unknown quality: " + quality)
 	}
 
-	r := &Release{Tracker: tracker, Timestamp: time.Now(), Artists: artist, Title: parts[2], Year: year, ReleaseType: releaseType, Format: format, Quality: quality, Source: source, HasLog: hasLog, LogScore: logScore, HasCue: hasCue, IsScene: isScene, torrentURL: torrentURL, Tags: tags, TorrentID: torrentID}
+	r := &Release{Tracker: trackerName, Timestamp: time.Now(), Artists: artist, Title: parts[2], Year: year, ReleaseType: releaseType, Format: format, Quality: quality, Source: source, HasLog: hasLog, LogScore: logScore, HasCue: hasCue, IsScene: isScene, torrentURL: torrentURL, Tags: tags, TorrentID: torrentID}
 	return r, nil
 }
 
@@ -171,16 +172,16 @@ func (r *Release) Satisfies(filter *ConfigFilter) bool {
 		logthis.Info(filter.Name+": Wrong quality", logthis.VERBOSE)
 		return false
 	}
-	if r.Source == sourceCD && r.Format == formatFLAC && filter.HasLog && !r.HasLog {
+	if r.Source == tracker.SourceCD && r.Format == tracker.FormatFLAC && filter.HasLog && !r.HasLog {
 		logthis.Info(filter.Name+": Release has no log", logthis.VERBOSE)
 		return false
 	}
 	// only compare logscores if the announce contained that information
-	if r.Source == sourceCD && r.Format == formatFLAC && filter.LogScore != 0 && (!r.HasLog || (r.LogScore != logScoreNotInAnnounce && filter.LogScore > r.LogScore)) {
+	if r.Source == tracker.SourceCD && r.Format == tracker.FormatFLAC && filter.LogScore != 0 && (!r.HasLog || (r.LogScore != logScoreNotInAnnounce && filter.LogScore > r.LogScore)) {
 		logthis.Info(filter.Name+": Incorrect log score", logthis.VERBOSE)
 		return false
 	}
-	if r.Source == sourceCD && r.Format == formatFLAC && filter.HasCue && !r.HasCue {
+	if r.Source == tracker.SourceCD && r.Format == tracker.FormatFLAC && filter.HasCue && !r.HasCue {
 		logthis.Info(filter.Name+": Release has no cue", logthis.VERBOSE)
 		return false
 	}
@@ -240,7 +241,7 @@ func (r *Release) HasCompatibleTrackerInfo(filter *ConfigFilter, blacklistedUplo
 		logthis.Info(filter.Name+": Release too small.", logthis.VERBOSE)
 		return false
 	}
-	if r.Source == sourceCD && r.Format == formatFLAC && r.HasLog && filter.LogScore != 0 && filter.LogScore > info.LogScore {
+	if r.Source == tracker.SourceCD && r.Format == tracker.FormatFLAC && r.HasLog && filter.LogScore != 0 && filter.LogScore > info.LogScore {
 		logthis.Info(filter.Name+": Incorrect log score", logthis.VERBOSE)
 		return false
 	}

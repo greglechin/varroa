@@ -11,6 +11,7 @@ import (
 	"gitlab.com/catastrophic/assistance/logthis"
 	"gitlab.com/catastrophic/assistance/strslice"
 	"gitlab.com/catastrophic/assistance/ui"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 const (
@@ -191,7 +192,7 @@ func (d *DownloadEntry) Sort(e *Environment, root string) error {
 	if err := d.Load(root); err != nil {
 		return err
 	}
-	fmt.Println(ui.YellowUnderlined("Sorting " + d.FolderName))
+	ui.Header("Sorting " + d.FolderName)
 	// if mpd configured, allow playing the release...
 	if e.config.MPD != nil && ui.Accept("Load release into MPD") {
 		fmt.Println("Sending to MPD.")
@@ -230,11 +231,12 @@ func (d *DownloadEntry) Sort(e *Environment, root string) error {
 
 	// display metadata
 	fmt.Println(d.Description(root))
-	fmt.Println(ui.Green("This is where you decide what to do with this release. In any case, it will keep seeding until you remove it yourself or with your bittorrent client."))
+	ui.Title("Sorting release")
+	ui.Usage("This decision will not have any consequence for the files in your download folder, or their seeding status.")
 	validChoice := false
 	errs := 0
 	for !validChoice {
-		ui.UserChoice("[A]ccept, [R]eject, or [D]efer decision : ")
+		ui.UserChoice("[A]ccept, [R]eject, or [D]efer decision")
 		choice, scanErr := ui.GetInput(nil)
 		if scanErr != nil {
 			return scanErr
@@ -294,10 +296,10 @@ func (d *DownloadEntry) export(root string, config *Config) error {
 				mainArtistCandidates := []string{strings.Join(artists, ", ")}
 				mainArtistCandidates = append(mainArtistCandidates, artists...)
 				if len(artists) >= 3 {
-					mainArtistCandidates = append(mainArtistCandidates, variousArtists)
+					mainArtistCandidates = append(mainArtistCandidates, tracker.VariousArtists)
 				}
 
-				mainArtist, err = ui.SelectOption("Main artist:\n", "You can change this value if several artists are listed, for organization purposes.", mainArtistCandidates)
+				mainArtist, err = ui.SelectValue("Defining main artist", "If several artists are listed, this will help organize your files.", mainArtistCandidates)
 				if err != nil {
 					return err
 				}
@@ -312,7 +314,7 @@ func (d *DownloadEntry) export(root string, config *Config) error {
 			if info.MainArtistAlias != info.MainArtist {
 				aliasCandidates = append(aliasCandidates, info.MainArtist)
 			}
-			mainArtistAlias, err := ui.SelectOption("Main artist alias:\n", "You can change this value if the main artist uses several aliases and you want to regroup their releases in the library.", aliasCandidates)
+			mainArtistAlias, err := ui.SelectValue("Defining main artist alias", "Change this value to regroup releases from different artist aliases in the library.", aliasCandidates)
 			if err != nil {
 				return err
 			}
@@ -326,7 +328,7 @@ func (d *DownloadEntry) export(root string, config *Config) error {
 			if !strslice.Contains(info.Tags, info.Category) {
 				categoryCandidates = append([]string{info.Category}, info.Tags...)
 			}
-			category, err := ui.SelectOption("User category:\n", "Allows custom library organization.", categoryCandidates)
+			category, err := ui.SelectValue("Defining user category", "Allows custom library organization.", categoryCandidates)
 			if err != nil {
 				return err
 			}
@@ -345,7 +347,7 @@ func (d *DownloadEntry) export(root string, config *Config) error {
 	// adding current folder name last
 	candidates = append(candidates, d.FolderName)
 	// select or input a new name
-	newName, err := ui.SelectOption("Generating new folder name from metadata:\n", "Folder must not already exist.", candidates)
+	newName, err := ui.SelectValue("Generating new folder name from metadata", "Folder must not already exist.", candidates)
 	if err != nil {
 		return err
 	}
@@ -353,21 +355,27 @@ func (d *DownloadEntry) export(root string, config *Config) error {
 		return errors.New("destination already exists")
 	}
 	// export
+	ui.Title("Exporting release")
 	if ui.Accept("Export as " + newName) {
 		fmt.Println("Exporting files to the library...")
 		if err = fs.CopyDir(filepath.Join(root, d.FolderName), filepath.Join(config.Library.Directory, newName), config.Library.UseHardLinks); err != nil {
 			return errors.Wrap(err, "Error exporting download "+d.FolderName)
 		}
-		fmt.Println(ui.Green("This release has been exported to your library. The original files have not been removed, but will be ignored in later sortings."))
+		fmt.Println(ui.Green("This release has been exported to your library. The original files have not been removed, but will be ignored in later sorts."))
 		// if exported, write playlists
-		if config.playlistDirectoryConfigured && ui.Accept("Add release to daily/monthly playlists") {
-			if err = addReleaseToCurrentPlaylists(config.Library.PlaylistDirectory, config.Library.Directory, newName); err != nil {
-				return err
+		if config.playlistDirectoryConfigured {
+			ui.Title("Updating playlists")
+			if ui.Accept("Add release to daily/monthly playlists") {
+				if err = addReleaseToCurrentPlaylists(config.Library.PlaylistDirectory, config.Library.Directory, newName); err != nil {
+					return err
+				}
+				fmt.Println(ui.Green("Playlists generated or updated.\n"))
+			} else {
+				fmt.Println(ui.Red("Playlists were not updated to include this release.\n"))
 			}
-			fmt.Println(ui.Green("Playlists generated or updated."))
 		}
 	} else {
-		fmt.Println(ui.Red("The release was not exported. It can be exported later by sorting this ID again. Until then, it will be marked as unsorted again."))
+		fmt.Println(ui.Red("The release was not exported. It can be exported later by sorting this ID again. Until then, it will be marked as unsorted again.\n"))
 		d.State = stateUnsorted
 	}
 	return nil

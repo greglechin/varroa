@@ -12,6 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gitlab.com/catastrophic/assistance/logthis"
+	"gitlab.com/passelecasque/obstruction/tracker"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -105,8 +106,8 @@ func (d *Discogs) Search(artist, release string, year int, label, catalogNumber,
 	}
 	if releaseType != "" {
 		// anthology and compilation have different meanings on discogs...
-		if releaseType == releaseAnthology {
-			releaseType = releaseCompilation
+		if releaseType == tracker.ReleaseAnthology {
+			releaseType = tracker.ReleaseCompilation
 		}
 		format = append(format, releaseType)
 	}

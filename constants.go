@@ -3,7 +3,7 @@ package varroa
 const (
 	FullName      = "varroa musica"
 	FullNameAlt   = "VarroaMusica"
-	Version       = "v25"
+	Version       = "v26"
 	FullVersion   = "%s -- %s."
 	pidFile       = "varroa_pid"
 	envPassphrase = "_VARROA_PASSPHRASE"
@@ -134,6 +134,7 @@ const (
 	errorNoStatsFilename         = "Error retrieving stats filename "
 	errorUnknownCommand          = "Error: unknown websocket command: "
 	errorIncomingWebSocketJSON   = "Error parsing websocket input"
+	errorOutgoingWebSocketJSON   = "Error writing to websocket"
 	errorIncorrectWebServerToken = "Error validating token for web server, ignoring."
 	errorCreatingWebSocket       = "Error creating websocket"
 	// certificates errors
@@ -209,3 +210,7 @@ const (
 	// generic constants
 	scanningFiles = "Scanning"
 )
+
+func userAgent() string {
+	return FullNameAlt + "/" + Version[1:]
+}

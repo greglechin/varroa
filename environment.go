@@ -10,13 +10,14 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	daemon "github.com/sevlyar/go-daemon"
+	"github.com/sevlyar/go-daemon"
 	"github.com/wcharczuk/go-chart/drawing"
 	"gitlab.com/catastrophic/assistance/fs"
 	"gitlab.com/catastrophic/assistance/git"
 	"gitlab.com/catastrophic/assistance/ipc"
 	"gitlab.com/catastrophic/assistance/logthis"
 	irc "gitlab.com/catastrophic/go-ircevent"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 const (
@@ -39,7 +40,7 @@ pages:
 type Environment struct {
 	config     *Config
 	serverData *ServerPage
-	Trackers   map[string]*GazelleTracker
+	Trackers   map[string]*tracker.Gazelle
 
 	mutex            sync.RWMutex
 	git              *git.Git
@@ -54,7 +55,7 @@ func NewEnvironment() *Environment {
 	e.config = &Config{}
 	e.serverData = &ServerPage{}
 	// make maps
-	e.Trackers = make(map[string]*GazelleTracker)
+	e.Trackers = make(map[string]*tracker.Gazelle)
 	e.daemonUnixSocket = ipc.NewUnixSocketServer(daemonSocket)
 	// irc
 	e.ircClient = nil
@@ -112,47 +113,43 @@ func (e *Environment) SetUp(autologin bool) error {
 			return errors.Wrap(err, errorCreatingStatsDir)
 		}
 	}
-
 	// log in all trackers, assuming labels are unique (configuration was checked)
 	for _, label := range e.config.TrackerLabels() {
-		config, err := e.config.GetTracker(label)
-		if err != nil {
-			return errors.Wrap(err, "Error getting tracker information")
+		if _, err := e.setUpTracker(label, autologin); err != nil {
+			return errors.Wrap(err, "Error setting up tracker "+label)
 		}
-		tracker := &GazelleTracker{Name: config.Name, URL: config.URL, User: config.User, Password: config.Password, limiter: make(chan bool, allowedAPICallsByPeriod)}
-		if autologin {
-			if err = tracker.Login(); err != nil {
-				return errors.Wrap(err, "Error logging in tracker "+label)
-			}
-			logthis.Info(fmt.Sprintf("Logged in tracker %s.", label), logthis.NORMAL)
-		}
-		// launching rate limiter
-		go tracker.apiCallRateLimiter()
-		e.Trackers[label] = tracker
 	}
 	return nil
 }
 
-func (e *Environment) Tracker(label string) (*GazelleTracker, error) {
-	// find in already loaded trackers
-	tracker, ok := e.Trackers[label]
+func (e *Environment) setUpTracker(label string, autologin bool) (*tracker.Gazelle, error) {
+	t, ok := e.Trackers[label]
 	if !ok {
 		// not found:
-		config, err := e.config.GetTracker(label)
+		trackerConfig, err := e.config.GetTracker(label)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error getting tracker information")
 		}
-		tracker = &GazelleTracker{Name: config.Name, URL: config.URL, User: config.User, Password: config.Password}
+		t, err = tracker.NewGazelle(trackerConfig.Name, trackerConfig.URL, trackerConfig.User, trackerConfig.Password, "session", trackerConfig.Cookie, userAgent())
+		if err != nil {
+			return nil, errors.Wrap(err, "Error setting up tracker "+trackerConfig.Name)
+		}
 		// saving
-		e.Trackers[label] = tracker
+		e.Trackers[label] = t
 	}
-	if tracker.client == nil {
-		if err := tracker.Login(); err != nil {
-			return tracker, errors.Wrap(err, "Error logging in tracker "+label)
+	if t.Client == nil && autologin {
+		if err := t.Login(); err != nil {
+			return nil, errors.Wrap(err, "Error logging in tracker "+label)
 		}
 		logthis.Info(fmt.Sprintf("Logged in tracker %s.", label), logthis.NORMAL)
+		// start rate limiter
+		go t.RateLimiter()
 	}
-	return tracker, nil
+	return t, nil
+}
+
+func (e *Environment) Tracker(label string) (*tracker.Gazelle, error) {
+	return e.setUpTracker(label, true)
 }
 
 func (e *Environment) GenerateIndex() error {

@@ -8,6 +8,7 @@ import (
 
 	"gitlab.com/catastrophic/assistance/fs"
 	"gitlab.com/catastrophic/assistance/logthis"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 const (
@@ -30,6 +31,26 @@ type StatsEntry struct {
 	StartOfWeek   bool  `storm:"index"`
 	StartOfMonth  bool  `storm:"index"`
 	SchemaVersion int
+}
+
+func NewStatsEntry(gazelleTracker *tracker.Gazelle, gzStats *tracker.GazelleUserStats) (*StatsEntry, error) {
+	ratio, err := strconv.ParseFloat(gzStats.Response.Stats.Ratio, 64)
+	if err != nil {
+		logthis.Info("Incorrect ratio: "+gzStats.Response.Stats.Ratio, logthis.NORMAL)
+		ratio = 0.0
+	}
+	// return StatsEntry
+	stats := &StatsEntry{
+		Tracker:       gazelleTracker.Name,
+		Up:            gzStats.Response.Stats.Uploaded,
+		Down:          gzStats.Response.Stats.Downloaded,
+		Ratio:         ratio,
+		Timestamp:     time.Now(),
+		TimestampUnix: time.Now().Unix(),
+		Collected:     true,
+		SchemaVersion: currentStatsDBSchemaVersion,
+	}
+	return stats, nil
 }
 
 func (se *StatsEntry) String() string {

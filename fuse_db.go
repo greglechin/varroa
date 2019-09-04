@@ -13,6 +13,7 @@ import (
 	"gitlab.com/catastrophic/assistance/fs"
 	"gitlab.com/catastrophic/assistance/logthis"
 	"gitlab.com/catastrophic/assistance/strslice"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 // FuseEntry is the struct describing a release folder with tracker metadata.
@@ -59,11 +60,11 @@ func (fe *FuseEntry) Load(root string) error {
 		// TODO: remove duplicate if there are actually several origins
 
 		// load useful things from JSON
-		for tracker := range origin.Origins {
-			fe.Tracker = append(fe.Tracker, tracker)
+		for trackerName := range origin.Origins {
+			fe.Tracker = append(fe.Tracker, trackerName)
 
 			// getting release info from json
-			infoJSON := filepath.Join(root, fe.FolderName, MetadataDir, tracker+"_"+trackerMetadataFile)
+			infoJSON := filepath.Join(root, fe.FolderName, MetadataDir, trackerName+"_"+trackerMetadataFile)
 			if !fs.FileExists(infoJSON) {
 				// if not present, try the old format
 				infoJSON = filepath.Join(root, fe.FolderName, MetadataDir, "Release.json")
@@ -71,7 +72,7 @@ func (fe *FuseEntry) Load(root string) error {
 			if fs.FileExists(infoJSON) {
 				// load JSON, get info
 				md := TrackerMetadata{}
-				if err := md.LoadFromJSON(tracker, originFile, infoJSON); err != nil {
+				if err := md.LoadFromJSON(trackerName, originFile, infoJSON); err != nil {
 					return errors.Wrap(err, "Error loading JSON file "+infoJSON)
 				}
 				// extract relevant information!
@@ -85,7 +86,7 @@ func (fe *FuseEntry) Load(root string) error {
 				fe.Title = md.Title
 				fe.Tags = md.Tags
 				fe.Source = md.SourceFull
-				fe.Format = ShortEncoding(md.Quality)
+				fe.Format = tracker.ShortEncoding(md.Quality)
 			}
 		}
 	} else {

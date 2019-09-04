@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 func TestConfig(t *testing.T) {
@@ -33,11 +34,13 @@ func TestConfig(t *testing.T) {
 	check.Equal("blue", tr.Name)
 	check.Equal("username", tr.User)
 	check.Equal("secretpassword", tr.Password)
+	check.Equal("", tr.Cookie)
 	check.Equal("https://blue.ch", tr.URL)
 	tr = c.Trackers[1]
 	check.Equal("purple", tr.Name)
-	check.Equal("username", tr.User)
-	check.Equal("secretpassword", tr.Password)
+	check.Equal("another_username", tr.User)
+	check.Equal("", tr.Password)
+	check.Equal("cookievalue", tr.Cookie)
 	check.Equal("https://purple.cd", tr.URL)
 	// autosnatch
 	fmt.Println("Checking autosnatch")
@@ -142,7 +145,7 @@ func TestConfig(t *testing.T) {
 	f := c.Filters[0]
 	check.Equal("perfect", f.Name)
 	check.Nil(f.Year)
-	check.Equal(knownSources, f.Source)
+	check.Equal(tracker.KnownSources, f.Source)
 	check.Equal([]string{"FLAC"}, f.Format)
 	check.Equal([]string{"24bit Lossless", "Lossless"}, f.Quality)
 	check.True(f.HasCue)

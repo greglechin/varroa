@@ -12,6 +12,7 @@ import (
 	"gitlab.com/catastrophic/assistance/logthis"
 	"gitlab.com/catastrophic/assistance/strslice"
 	irc "gitlab.com/catastrophic/go-ircevent"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 	alternativeAnnouncePattern = `(.*?) - (.*) \[([\d]{4})\] \[(Album|Soundtrack|Compilation|Anthology|EP|Single|Live album|Remix|Bootleg|Interview|Mixtape|Demo|Concert Recording|DJ Mix|Unknown)\] - (FLAC|MP3|AAC) / (Lossless|24bit Lossless|V0 \(VBR\)|V2 \(VBR\)|320|256) /( (Log) /)?( (-*\d+)\% /)?( (Cue) /)? (CD|DVD|Vinyl|Soundboard|SACD|DAT|Cassette|WEB|Blu-Ray) (/ (Scene) )?- ([\w\., ]*) - (http[s]?://[\w\./:]*torrents\.php\?id=[\d]*) / (http[s]?://[\w\./:]*torrents\.php\?action=download&id=[\d]*)`
 )
 
-func analyzeAnnounce(announced string, e *Environment, tracker *GazelleTracker, autosnatchConfig *ConfigAutosnatch) error {
+func analyzeAnnounce(announced string, e *Environment, t *tracker.Gazelle, autosnatchConfig *ConfigAutosnatch) error {
 	stats, err := NewStatsDB(filepath.Join(StatsDir, DefaultHistoryDB))
 	if err != nil {
 		return errors.Wrap(err, "could not access the stats database")
@@ -36,7 +37,7 @@ func analyzeAnnounce(announced string, e *Environment, tracker *GazelleTracker, 
 	}
 
 	if len(hits) != 0 {
-		release, err := NewRelease(tracker.Name, hits[0], alternative)
+		release, err := NewRelease(t.Name, hits[0], alternative)
 		if err != nil {
 			return err
 		}
@@ -45,19 +46,18 @@ func analyzeAnnounce(announced string, e *Environment, tracker *GazelleTracker, 
 		// if satisfies a filter, download
 		var downloadedInfo bool
 		var downloadedTorrent bool
-		var info *TrackerMetadata
+		info := &TrackerMetadata{}
 		for _, filter := range e.config.Filters {
 			// checking if filter is specifically set for this tracker (if nothing is indicated, all trackers match)
-			if len(filter.Tracker) != 0 && !strslice.Contains(filter.Tracker, tracker.Name) {
-				logthis.Info(fmt.Sprintf(infoFilterIgnoredForTracker, filter.Name, tracker.Name), logthis.VERBOSE)
+			if len(filter.Tracker) != 0 && !strslice.Contains(filter.Tracker, t.Name) {
+				logthis.Info(fmt.Sprintf(infoFilterIgnoredForTracker, filter.Name, t.Name), logthis.VERBOSE)
 				continue
 			}
 			// checking if a filter is triggered
 			if release.Satisfies(filter) {
 				// get torrent info!
 				if !downloadedInfo {
-					info, err = tracker.GetTorrentMetadata(release.TorrentID)
-					if err != nil {
+					if err := info.LoadFromID(t, release.TorrentID); err != nil {
 						return errors.New(errorCouldNotGetTorrentInfo)
 					}
 					downloadedInfo = true
@@ -83,7 +83,7 @@ func analyzeAnnounce(announced string, e *Environment, tracker *GazelleTracker, 
 					if filter.WatchDir != "" {
 						destination = filter.WatchDir
 					}
-					if err := tracker.DownloadTorrent(release.torrentURL, release.TorrentFile(), destination); err != nil {
+					if err := t.DownloadTorrent(release.torrentURL, release.TorrentFile(), destination); err != nil {
 						return errors.Wrap(err, errorDownloadingTorrent)
 					}
 					downloadedTorrent = true
@@ -92,12 +92,12 @@ func analyzeAnnounce(announced string, e *Environment, tracker *GazelleTracker, 
 						logthis.Error(errors.Wrap(err, errorAddingToHistory), logthis.NORMAL)
 					}
 					// send notification
-					if err := Notify(filter.Name+": Snatched "+release.ShortString(), tracker.Name, "info", e); err != nil {
+					if err := Notify(filter.Name+": Snatched "+release.ShortString(), t.Name, "info", e); err != nil {
 						logthis.Error(err, logthis.NORMAL)
 					}
 					// save metadata once the download folder is created
 					if e.config.General.AutomaticMetadataRetrieval {
-						go info.SaveFromTracker(filepath.Join(e.config.General.DownloadDir, info.FolderName), tracker)
+						go info.SaveFromTracker(filepath.Join(e.config.General.DownloadDir, info.FolderName), t)
 					}
 					// no need to consider other filters
 					break
@@ -113,17 +113,16 @@ func analyzeAnnounce(announced string, e *Environment, tracker *GazelleTracker, 
 	return nil
 }
 
-func ircHandler(e *Environment, tracker *GazelleTracker) {
+func ircHandler(e *Environment, t *tracker.Gazelle) {
 	// general replacer to remove color codes and other useless things from announces.
 	r := strings.NewReplacer("\x02TORRENT:\x02 ", "", "\x0303", "", "\x0304", "", "\x0310", "", "\x0312", "", "\x03", "")
 
-	autosnatchConfig, err := e.config.GetAutosnatch(tracker.Name)
+	autosnatchConfig, err := e.config.GetAutosnatch(t.Name)
 	if err != nil {
-		logthis.Info("Cannot find autosnatch configuration for tracker "+tracker.Name, logthis.NORMAL)
+		logthis.Info("Cannot find autosnatch configuration for tracker "+t.Name, logthis.NORMAL)
 		return
 	}
-
-	IRCClient := irc.IRC(autosnatchConfig.BotName, tracker.User)
+	IRCClient := irc.IRC(autosnatchConfig.BotName, t.User)
 	if autosnatchConfig.LocalAddress != "" {
 		IRCClient.LocalAddress = autosnatchConfig.LocalAddress
 	}
@@ -131,7 +130,7 @@ func ircHandler(e *Environment, tracker *GazelleTracker) {
 	IRCClient.TLSConfig = &tls.Config{InsecureSkipVerify: autosnatchConfig.IRCSSLSkipVerify}
 	IRCClient.AddCallback("001", func(_ *irc.Event) {
 		IRCClient.Privmsg("NickServ", "IDENTIFY "+autosnatchConfig.NickservPassword)
-		IRCClient.Privmsg(autosnatchConfig.Announcer, fmt.Sprintf("enter %s %s %s", autosnatchConfig.AnnounceChannel, tracker.User, autosnatchConfig.IRCKey))
+		IRCClient.Privmsg(autosnatchConfig.Announcer, fmt.Sprintf("enter %s %s %s", autosnatchConfig.AnnounceChannel, t.User, autosnatchConfig.IRCKey))
 		if e.config.ircNotifsConfigured {
 			IRCClient.Privmsg(e.config.Notifications.Irc.User, "varroa bot, connected.")
 		}
@@ -158,8 +157,8 @@ func ircHandler(e *Environment, tracker *GazelleTracker) {
 			e.mutex.RUnlock()
 			if canSnatch {
 				announced := r.Replace(ev.Message())
-				logthis.Info("++ Announced on "+tracker.Name+": "+announced, logthis.VERBOSE)
-				if err = analyzeAnnounce(announced, e, tracker, autosnatchConfig); err != nil {
+				logthis.Info("++ Announced on "+t.Name+": "+announced, logthis.VERBOSE)
+				if err = analyzeAnnounce(announced, e, t, autosnatchConfig); err != nil {
 					logthis.Error(errors.Wrap(err, errorDealingWithAnnounce), logthis.VERBOSE)
 					return
 				}
@@ -171,6 +170,8 @@ func ircHandler(e *Environment, tracker *GazelleTracker) {
 		logthis.Error(errors.Wrap(err, errorConnectingToIRC), logthis.NORMAL)
 		return
 	}
-	e.ircClient = IRCClient
+	if e.config.ircNotifsConfigured && e.config.Notifications.Irc.Tracker == autosnatchConfig.Tracker {
+		e.ircClient = IRCClient
+	}
 	IRCClient.Loop()
 }

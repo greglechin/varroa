@@ -163,7 +163,7 @@ func main() {
 				}
 				fmt.Println("Sorting specific download folders.")
 				for _, id := range cli.torrentIDs {
-					if err = downloads.SortThisID(env, id); err != nil {
+					if err = downloads.SortThisID(env, id, cli.ignoreSorted); err != nil {
 						logthis.Error(err, logthis.NORMAL)
 					}
 				}

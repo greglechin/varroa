@@ -155,7 +155,7 @@ func (sc *ServerPage) update(downloads *DownloadsDB) {
 			{Name: "Upload/day", Label: label + "_" + overallPrefix + "_" + perDay + uploadStatsFile},
 			{Name: "Download/day", Label: label + "_" + overallPrefix + "_" + perDay + downloadStatsFile},
 			{Name: "Ratio/day", Label: label + "_" + overallPrefix + "_" + perDay + ratioStatsFile},
-			{Name: "Number Snatched/day", Label: label + "_" + sizeSnatchedPerDayFile},
+			{Name: "Number Snatched/day", Label: label + "_" + numberSnatchedPerDayFile},
 			{Name: "Size Snatched/day", Label: label + "_" + sizeSnatchedPerDayFile},
 		}
 		// add graphs + links

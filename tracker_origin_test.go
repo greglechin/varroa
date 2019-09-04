@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/catastrophic/assistance/fs"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 func TestTrackerOriginJSON(t *testing.T) {
@@ -27,10 +28,12 @@ func TestTrackerOriginJSON(t *testing.T) {
 	tr2 := &ConfigTracker{Name: "tracker2", URL: "http://qwerty.com"}
 	c.Trackers = append(c.Trackers, tr, tr2)
 	env.config = c
-	tracker1 := &GazelleTracker{Name: "tracker1", URL: "http://azerty.com"}
-	tracker2 := &GazelleTracker{Name: "tracker2", URL: "http://qwerty.com"}
-	info1 := TrackerMetadata{ID: 1234, GroupID: 11, Tracker: tracker1.Name, TrackerURL: tracker1.URL, LastUpdated: 1531651670, IsAlive: true}
-	info2 := TrackerMetadata{ID: 1234, GroupID: 12, Tracker: tracker2.Name, TrackerURL: tracker2.URL, LastUpdated: 1543701948}
+	tracker1, err := tracker.NewGazelle("tracker1", "http://azerty.com", "user", "password", "", "", userAgent())
+	check.Nil(err)
+	tracker2, err := tracker.NewGazelle("tracker2", "http://qwerty.com", "user", "password", "", "", userAgent())
+	check.Nil(err)
+	info1 := TrackerMetadata{ID: 1234, GroupID: 11, Tracker: tracker1.Name, TrackerURL: tracker1.DomainURL, LastUpdated: 1531651670, IsAlive: true}
+	info2 := TrackerMetadata{ID: 1234, GroupID: 12, Tracker: tracker2.Name, TrackerURL: tracker2.DomainURL, LastUpdated: 1543701948}
 
 	// make directory
 	check.Nil(os.MkdirAll(filepath.Join(testDir, MetadataDir), 0775))

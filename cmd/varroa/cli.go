@@ -36,7 +36,7 @@ Description:
 	- be remotely controlled from your browser with a GreaseMonkey script.
 	- send notifications to your Android device or to a given IRC user 
 	  about stats and snatches.
-	- check local logs agains logchecker.php
+	- check local logs against logchecker.php
 	- sort downloads, export them to your library, automatically rename
 	  folders using tracker metadata
 	- mount a read-only FUSE filesystem exposing your downloads or library
@@ -143,7 +143,7 @@ Usage:
 	varroa info <TRACKER> <ID>...
 	varroa backup
 	varroa show-config
-	varroa (downloads|dl) (search <ARTIST>|metadata <ID>|sort [<PATH>...]|sort-id [<ID>...]|list [<STATE>]|clean|fuse <MOUNT_POINT>)
+	varroa (downloads|dl) (search <ARTIST>|metadata <ID>|sort [--new] [<PATH>...]|sort-id [<ID>...]|list [<STATE>]|clean|fuse <MOUNT_POINT>)
 	varroa library (fuse <MOUNT_POINT>|reorganize [--simulate|--interactive])
 	varroa reseed <TRACKER> <PATH>
 	varroa (encrypt|decrypt)
@@ -155,6 +155,7 @@ Options:
  	--fl                   Use personal Freeleech torrent if available.
 	--simulate             Simulate library reorganization to show what would be renamed.
 	--interactive          Library reorganization requires user confirmation for each release if necessary.
+	--new                  Only sort new releases (ignore previously sorted ones)
   	--version              Show version.
 `
 )
@@ -197,6 +198,7 @@ type varroaArguments struct {
 	reseed                  bool
 	enhance                 bool
 	useFLToken              bool
+	ignoreSorted            bool
 	torrentIDs              []int
 	logFile                 string
 	trackerLabel            string
@@ -244,6 +246,9 @@ func (b *varroaArguments) parseCLI(osArgs []string) error {
 		}
 		b.downloadInfo = args["metadata"].(bool)
 		b.downloadSort = args["sort"].(bool)
+		if b.downloadSort {
+			b.ignoreSorted = args["--new"].(bool)
+		}
 		b.downloadSortID = args["sort-id"].(bool)
 		b.downloadList = args["list"].(bool)
 		b.downloadClean = args["clean"].(bool)

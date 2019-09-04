@@ -11,19 +11,26 @@ import (
 )
 
 func updateStats(e *Environment, tracker string, stats *StatsDB) error {
-	// collect new stats for this tracker
+	// read configuration for this tracker
 	statsConfig, err := e.config.GetStats(tracker)
 	if err != nil {
 		return errors.Wrap(err, "Error loading stats config for "+tracker)
 	}
+
+	// collect user stats
 	gazelleTracker, err := e.Tracker(tracker)
 	if err != nil {
 		return errors.Wrap(err, "Error getting tracker info for "+tracker)
 	}
-	newStats, err := gazelleTracker.GetStats()
+	gzStats, err := gazelleTracker.GetLoggedUserStats()
 	if err != nil {
 		return errors.Wrap(err, errorGettingStats)
 	}
+	newStats, err := NewStatsEntry(gazelleTracker, gzStats)
+	if err != nil {
+		return errors.Wrap(err, errorGettingStats)
+	}
+
 	// save to database
 	if saveErr := stats.Save(newStats); saveErr != nil {
 		return errors.Wrap(saveErr, "Error saving stats to database")

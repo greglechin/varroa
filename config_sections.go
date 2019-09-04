@@ -13,6 +13,7 @@ import (
 	"gitlab.com/catastrophic/assistance/intslice"
 	"gitlab.com/catastrophic/assistance/logthis"
 	"gitlab.com/catastrophic/assistance/strslice"
+	"gitlab.com/passelecasque/obstruction/tracker"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -58,6 +59,7 @@ type ConfigTracker struct {
 	Name     string
 	User     string
 	Password string
+	Cookie   string
 	URL      string
 }
 
@@ -66,13 +68,13 @@ func (ct *ConfigTracker) check() error {
 		return errors.New("Missing tracker name")
 	}
 	if ct.User == "" {
-		return errors.New("Missing tracker username")
+		return errors.New("Missing tracker username for " + ct.Name)
 	}
-	if ct.Password == "" {
-		return errors.New("Missing tracker password")
+	if ct.Cookie == "" && ct.Password == "" {
+		return errors.New("Missing log in information (password or session cookie) for " + ct.Name)
 	}
 	if ct.URL == "" {
-		return errors.New("Missing tracker URL")
+		return errors.New("Missing tracker URL for " + ct.Name)
 	}
 	return nil
 }
@@ -81,6 +83,7 @@ func (ct *ConfigTracker) String() string {
 	txt := "Tracker configuration for " + ct.Name + "\n"
 	txt += "\tUser: " + ct.User + "\n"
 	txt += "\tPassword: " + ct.Password + "\n"
+	txt += "\tCookie value: " + ct.Cookie + "\n"
 	txt += "\tURL: " + ct.URL + "\n"
 	return txt
 }
@@ -254,25 +257,25 @@ type ConfigStats struct {
 
 func (cs *ConfigStats) check() error {
 	if cs.Tracker == "" {
-		return errors.New("Missing tracker name")
+		return errors.New("missing tracker name")
 	}
 	if cs.UpdatePeriodH == 0 {
-		return errors.New("Missing stats update period (in hours)")
+		return errors.New("missing stats update period (in hours)")
 	}
 	if cs.MinimumRatio == 0 {
 		cs.MinimumRatio = warningRatio
 	}
 	if cs.MinimumRatio < warningRatio {
-		return fmt.Errorf("Minimum ratio must be at least %.2f", warningRatio)
+		return fmt.Errorf("minimum ratio must be at least %.2f", warningRatio)
 	}
 	if cs.TargetRatio == 0 {
 		cs.TargetRatio = defaultTargetRatio
 	}
 	if cs.TargetRatio < warningRatio {
-		return fmt.Errorf("Target ratio must be higher than %.2f", warningRatio)
+		return fmt.Errorf("target ratio must be higher than %.2f", warningRatio)
 	}
 	if cs.TargetRatio < cs.MinimumRatio {
-		return fmt.Errorf("Target ratio must be higher than minimum ratio (%.2f)", cs.MinimumRatio)
+		return fmt.Errorf("target ratio must be higher than minimum ratio (%.2f)", cs.MinimumRatio)
 	}
 	return nil
 }
@@ -524,7 +527,7 @@ func (cf *ConfigFilter) check() error {
 	if cf.Name == "" {
 		return errors.New("Missing filter name")
 	}
-	if (cf.HasCue || cf.HasLog || cf.LogScore != 0) && !strslice.Contains(cf.Source, sourceCD) {
+	if (cf.HasCue || cf.HasLog || cf.LogScore != 0) && !strslice.Contains(cf.Source, tracker.SourceCD) {
 		return errors.New("Has Log/Cue only relevant if CD is an acceptable source")
 	}
 	if cf.MaxSizeMB < 0 || cf.MinSizeMB < 0 {
@@ -556,12 +559,12 @@ func (cf *ConfigFilter) check() error {
 			return errors.New("The perfect_flag option replaces all options about quality, source, format, and cue/log/log score")
 		}
 		// setting the relevant options
-		cf.Format = []string{formatFLAC}
-		cf.Quality = []string{quality24bitLossless, qualityLossless}
+		cf.Format = []string{tracker.FormatFLAC}
+		cf.Quality = []string{tracker.Quality24bitLossless, tracker.QualityLossless}
 		cf.HasCue = true
 		cf.HasLog = true
 		cf.LogScore = 100
-		cf.Source = knownSources
+		cf.Source = tracker.KnownSources
 	}
 	if reflect.DeepEqual(*cf, ConfigFilter{Name: cf.Name}) {
 		return errors.New("Empty filter would snatch everything, it probably is not what you want")
@@ -573,36 +576,36 @@ func (cf *ConfigFilter) check() error {
 	// checking against known gazelle values
 	if len(cf.ReleaseType) != 0 {
 		for _, r := range cf.ReleaseType {
-			if !strslice.Contains(knownReleaseTypes, r) {
-				return errors.New("unknown release type " + r + ", acceptable values: " + strings.Join(knownReleaseTypes, ", "))
+			if !strslice.Contains(tracker.KnownReleaseTypes, r) {
+				return errors.New("unknown release type " + r + ", acceptable values: " + strings.Join(tracker.KnownReleaseTypes, ", "))
 			}
 		}
 	}
 	if len(cf.ExcludedReleaseType) != 0 {
 		for _, r := range cf.ExcludedReleaseType {
-			if !strslice.Contains(knownReleaseTypes, r) {
-				return errors.New("unknown release type " + r + ", acceptable values: " + strings.Join(knownReleaseTypes, ", "))
+			if !strslice.Contains(tracker.KnownReleaseTypes, r) {
+				return errors.New("unknown release type " + r + ", acceptable values: " + strings.Join(tracker.KnownReleaseTypes, ", "))
 			}
 		}
 	}
 	if len(cf.Format) != 0 {
 		for _, r := range cf.Format {
-			if !strslice.Contains(knownFormats, r) {
-				return errors.New("unknown format " + r + ", acceptable values: " + strings.Join(knownFormats, ", "))
+			if !strslice.Contains(tracker.KnownFormats, r) {
+				return errors.New("unknown format " + r + ", acceptable values: " + strings.Join(tracker.KnownFormats, ", "))
 			}
 		}
 	}
 	if len(cf.Source) != 0 {
 		for _, r := range cf.Source {
-			if !strslice.Contains(knownSources, r) {
-				return errors.New("unknown source " + r + ", acceptable values: " + strings.Join(knownSources, ", "))
+			if !strslice.Contains(tracker.KnownSources, r) {
+				return errors.New("unknown source " + r + ", acceptable values: " + strings.Join(tracker.KnownSources, ", "))
 			}
 		}
 	}
 	if len(cf.Quality) != 0 {
 		for _, r := range cf.Quality {
-			if !strslice.Contains(knownQualities, r) {
-				return errors.New("unknown quality " + r + ", acceptable values: " + strings.Join(knownQualities, ", "))
+			if !strslice.Contains(tracker.KnownQualities, r) {
+				return errors.New("unknown quality " + r + ", acceptable values: " + strings.Join(tracker.KnownQualities, ", "))
 			}
 		}
 	}

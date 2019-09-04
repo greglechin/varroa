@@ -13,6 +13,7 @@ import (
 	"gitlab.com/catastrophic/assistance/fs"
 	"gitlab.com/catastrophic/assistance/logthis"
 	"gitlab.com/catastrophic/assistance/strslice"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 type Track struct {
@@ -204,7 +205,7 @@ func (t *Track) trackType(tm TrackerMetadata) trackType {
 	// TODO else use discogs info?
 
 	// find if multi artists based on release type?
-	if strslice.Contains([]string{releaseCompilation, releaseDJMix, releaseMixtape, releaseRemix}, tm.ReleaseType) {
+	if strslice.Contains([]string{tracker.ReleaseCompilation, tracker.ReleaseDJMix, tracker.ReleaseMixtape, tracker.ReleaseRemix}, tm.ReleaseType) {
 		if multiDisc {
 			return multiArtistsAndDiscTrack
 		}

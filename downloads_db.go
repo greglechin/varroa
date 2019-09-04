@@ -381,12 +381,12 @@ func (d *DownloadsDB) Sort(e *Environment) error {
 	return nil
 }
 
-func (d *DownloadsDB) SortThisID(e *Environment, id int) error {
+func (d *DownloadsDB) SortThisID(e *Environment, id int, ignoreSorted bool) error {
 	dl, err := d.FindByID(id)
 	if err != nil {
 		return errors.Wrap(err, "Error finding such an ID in the downloads database")
 	}
-	if dl.State != stateUnsorted && !ui.Accept(fmt.Sprintf("Download #%d (%s) has already been accepted or rejected. Do you want to sort it again ", dl.ID, dl.FolderName)) {
+	if dl.State != stateUnsorted && (ignoreSorted || !ui.Accept(fmt.Sprintf("Download #%d (%s) has already been accepted or rejected. Do you want to sort it again ", dl.ID, dl.FolderName))) {
 		return nil
 	}
 	if err := dl.Sort(e, d.root); err != nil {

@@ -168,7 +168,7 @@ func (tm *TrackTags) mergeFieldByName(field, title string, o TrackTags) error {
 	otherValue := reflect.ValueOf(&o).Elem().FieldByName(field).String()
 	options := []string{localValue, otherValue}
 	if !diffString(title, localValue, otherValue) {
-		newValue, err := ui.SelectOption("Select correct value or enter one\n", "First option comes from the audio file, second option from Discogs.", options)
+		newValue, err := ui.SelectValue("Select correct value or enter one\n", "First option comes from the audio file, second option from Discogs.", options)
 		if err != nil {
 			return err
 		}

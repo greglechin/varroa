@@ -23,6 +23,7 @@ import (
 	"gitlab.com/catastrophic/assistance/logthis"
 	"gitlab.com/catastrophic/assistance/strslice"
 	"gitlab.com/catastrophic/assistance/ui"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 const (
@@ -82,10 +83,10 @@ Loop:
 					logthis.Error(errors.Wrap(jsonErr, "Error parsing incoming command from unix socket"), logthis.NORMAL)
 					continue
 				}
-				var tracker *GazelleTracker
+				var t *tracker.Gazelle
 				var err error
 				if orders.Site != "" {
-					tracker, err = e.Tracker(orders.Site)
+					t, err = e.Tracker(orders.Site)
 					if err != nil {
 						logthis.Error(errors.Wrap(err, "Error parsing tracker label for command from unix socket"), logthis.NORMAL)
 						continue
@@ -98,19 +99,19 @@ Loop:
 						logthis.Error(errors.Wrap(err, ErrorGeneratingGraphs), logthis.NORMAL)
 					}
 				case "refresh-metadata-by-id":
-					if err := RefreshMetadata(e, tracker, orders.Args); err != nil {
+					if err := RefreshMetadata(e, t, orders.Args); err != nil {
 						logthis.Error(errors.Wrap(err, ErrorRefreshingMetadata), logthis.NORMAL)
 					}
 				case "snatch":
-					if err := SnatchTorrents(e, tracker, orders.Args, orders.FLToken); err != nil {
+					if err := SnatchTorrents(e, t, orders.Args, orders.FLToken); err != nil {
 						logthis.Error(errors.Wrap(err, ErrorSnatchingTorrent), logthis.NORMAL)
 					}
 				case "info":
-					if err := ShowTorrentInfo(e, tracker, orders.Args); err != nil {
+					if err := ShowTorrentInfo(e, t, orders.Args); err != nil {
 						logthis.Error(errors.Wrap(err, ErrorShowingTorrentInfo), logthis.NORMAL)
 					}
 				case "check-log":
-					if err := CheckLog(tracker, orders.Args); err != nil {
+					if err := CheckLog(t, orders.Args); err != nil {
 						logthis.Error(errors.Wrap(err, ErrorCheckingLog), logthis.NORMAL)
 					}
 				case "uptime":
@@ -126,7 +127,7 @@ Loop:
 						logthis.Info(statusString(e), logthis.NORMAL)
 					}
 				case "reseed":
-					if err := Reseed(tracker, orders.Args); err != nil {
+					if err := Reseed(t, orders.Args); err != nil {
 						logthis.Error(errors.Wrap(err, ErrorReseed), logthis.NORMAL)
 					}
 				case ipc.StopCommand:
@@ -201,7 +202,7 @@ func GenerateStats(e *Environment) error {
 }
 
 // RefreshMetadata for a list of releases on a tracker
-func RefreshMetadata(e *Environment, tracker *GazelleTracker, IDStrings []string) error {
+func RefreshMetadata(e *Environment, t *tracker.Gazelle, IDStrings []string) error {
 	if len(IDStrings) == 0 {
 		return errors.New("Error: no ID provided")
 	}
@@ -213,26 +214,24 @@ func RefreshMetadata(e *Environment, tracker *GazelleTracker, IDStrings []string
 
 	for _, id := range IDStrings {
 		var found Release
-		var info *TrackerMetadata
-		var infoErr error
-		findIDsQuery := q.And(q.Eq("Tracker", tracker.Name), q.Eq("TorrentID", id))
+		info := &TrackerMetadata{}
+		findIDsQuery := q.And(q.Eq("Tracker", t.Name), q.Eq("TorrentID", id))
 		if err := stats.db.DB.Select(findIDsQuery).First(&found); err != nil {
 			if err == storm.ErrNotFound {
 				// not found, try to locate download directory nonetheless
 				if e.config.DownloadFolderConfigured {
 					logthis.Info("Release not found in history, trying to locate in downloads directory.", logthis.NORMAL)
 					// get data from tracker
-					info, infoErr = tracker.GetTorrentMetadata(id)
-					if infoErr != nil {
-						logthis.Error(errors.Wrap(infoErr, errorCouldNotGetTorrentInfo), logthis.NORMAL)
+					if err := info.LoadFromID(t, id); err != nil {
+						logthis.Error(errors.Wrap(err, errorCouldNotGetTorrentInfo), logthis.NORMAL)
 						break
 					}
 					fullFolder := filepath.Join(e.config.General.DownloadDir, info.FolderName)
 					if fs.DirExists(fullFolder) {
 						if daemon.WasReborn() {
-							go info.SaveFromTracker(fullFolder, tracker)
+							go info.SaveFromTracker(fullFolder, t)
 						} else {
-							info.SaveFromTracker(fullFolder, tracker)
+							info.SaveFromTracker(fullFolder, t)
 						}
 					} else {
 						logthis.Info(fmt.Sprintf(errorCannotFindID, id), logthis.NORMAL)
@@ -250,16 +249,15 @@ func RefreshMetadata(e *Environment, tracker *GazelleTracker, IDStrings []string
 			// was found
 			logthis.Info("Found release with ID "+found.TorrentID+" in history: "+found.ShortString()+". Getting tracker metadata.", logthis.NORMAL)
 			// get data from tracker
-			info, infoErr = tracker.GetTorrentMetadata(found.TorrentID)
-			if infoErr != nil {
-				logthis.Error(errors.Wrap(infoErr, errorCouldNotGetTorrentInfo), logthis.NORMAL)
-				continue
+			if err := info.LoadFromID(t, found.TorrentID); err != nil {
+				logthis.Error(errors.Wrap(err, errorCouldNotGetTorrentInfo), logthis.NORMAL)
+				break
 			}
 			fullFolder := filepath.Join(e.config.General.DownloadDir, info.FolderName)
 			if daemon.WasReborn() {
-				go info.SaveFromTracker(fullFolder, tracker)
+				go info.SaveFromTracker(fullFolder, t)
 			} else {
-				info.SaveFromTracker(fullFolder, tracker)
+				info.SaveFromTracker(fullFolder, t)
 			}
 		}
 		// check the number of active seeders
@@ -276,26 +274,26 @@ func RefreshMetadata(e *Environment, tracker *GazelleTracker, IDStrings []string
 }
 
 // RefreshLibraryMetadata for a list of releases on a tracker, using the given location instead of assuming they are in the download directory.
-func RefreshLibraryMetadata(path string, tracker *GazelleTracker, id string) error {
+func RefreshLibraryMetadata(path string, t *tracker.Gazelle, id string) error {
 	if !DirectoryContainsMusicAndMetadata(path) {
 		return fmt.Errorf(ErrorFindingMusicAndMetadata, path)
 	}
 	// get data from tracker
-	info, infoErr := tracker.GetTorrentMetadata(id)
-	if infoErr != nil {
-		return errors.Wrap(infoErr, errorCouldNotGetTorrentInfo)
+	info := &TrackerMetadata{}
+	if err := info.LoadFromID(t, id); err != nil {
+		return errors.Wrap(err, errorCouldNotGetTorrentInfo)
 	}
-	return info.SaveFromTracker(path, tracker)
+	return info.SaveFromTracker(path, t)
 }
 
 // SnatchTorrents on a tracker using their TorrentIDs
-func SnatchTorrents(e *Environment, tracker *GazelleTracker, IDStrings []string, useFLToken bool) error {
+func SnatchTorrents(e *Environment, t *tracker.Gazelle, IDStrings []string, useFLToken bool) error {
 	if len(IDStrings) == 0 {
 		return errors.New("Error: no ID provided")
 	}
 	// snatch
 	for _, id := range IDStrings {
-		release, err := manualSnatchFromID(e, tracker, id, useFLToken)
+		release, err := manualSnatchFromID(e, t, id, useFLToken)
 		if err != nil {
 			return errors.New("Error snatching torrent with ID #" + id)
 		}
@@ -305,7 +303,7 @@ func SnatchTorrents(e *Environment, tracker *GazelleTracker, IDStrings []string,
 }
 
 // ShowTorrentInfo of a list of releases on a tracker
-func ShowTorrentInfo(e *Environment, tracker *GazelleTracker, IDStrings []string) error {
+func ShowTorrentInfo(e *Environment, t *tracker.Gazelle, IDStrings []string) error {
 	if len(IDStrings) == 0 {
 		return errors.New("Error: no ID provided")
 	}
@@ -317,11 +315,11 @@ func ShowTorrentInfo(e *Environment, tracker *GazelleTracker, IDStrings []string
 
 	// get info
 	for _, id := range IDStrings {
-		logthis.Info(fmt.Sprintf("+ Info about %s / %s: \n", tracker.Name, id), logthis.NORMAL)
+		logthis.Info(fmt.Sprintf("+ Info about %s / %s: \n", t.Name, id), logthis.NORMAL)
 		// get release info from ID
-		info, err := tracker.GetTorrentMetadata(id)
-		if err != nil {
-			logthis.Error(errors.Wrap(err, fmt.Sprintf("Could not get info about torrent %s on %s, may not exist", id, tracker.Name)), logthis.NORMAL)
+		info := &TrackerMetadata{}
+		if err := info.LoadFromID(t, id); err != nil {
+			logthis.Error(errors.Wrap(err, fmt.Sprintf("Could not get info about torrent %s on %s, may not exist", id, t.Name)), logthis.NORMAL)
 			continue
 		}
 		release := info.Release()
@@ -329,7 +327,7 @@ func ShowTorrentInfo(e *Environment, tracker *GazelleTracker, IDStrings []string
 
 		// find if in history
 		var found Release
-		if selectErr := stats.db.DB.Select(q.And(q.Eq("Tracker", tracker.Name), q.Eq("TorrentID", id))).First(&found); selectErr != nil {
+		if selectErr := stats.db.DB.Select(q.And(q.Eq("Tracker", t.Name), q.Eq("TorrentID", id))).First(&found); selectErr != nil {
 			logthis.Info("+ This torrent has not been snatched with varroa.", logthis.NORMAL)
 		} else {
 			logthis.Info("+ This torrent has been snatched with varroa.", logthis.NORMAL)
@@ -347,15 +345,15 @@ func ShowTorrentInfo(e *Environment, tracker *GazelleTracker, IDStrings []string
 		}
 
 		// check and print if info/release triggers filters
-		autosnatchConfig, err := e.config.GetAutosnatch(tracker.Name)
+		autosnatchConfig, err := e.config.GetAutosnatch(t.Name)
 		if err != nil {
-			logthis.Info("Cannot find autosnatch configuration for tracker "+tracker.Name, logthis.NORMAL)
+			logthis.Info("Cannot find autosnatch configuration for tracker "+t.Name, logthis.NORMAL)
 		} else {
 			logthis.Info("+ Showing autosnatch filters results for this release:\n", logthis.NORMAL)
 			for _, filter := range e.config.Filters {
 				// checking if filter is specifically set for this tracker (if nothing is indicated, all trackers match)
-				if len(filter.Tracker) != 0 && !strslice.Contains(filter.Tracker, tracker.Name) {
-					logthis.Info(fmt.Sprintf(infoFilterIgnoredForTracker, filter.Name, tracker.Name), logthis.NORMAL)
+				if len(filter.Tracker) != 0 && !strslice.Contains(filter.Tracker, t.Name) {
+					logthis.Info(fmt.Sprintf(infoFilterIgnoredForTracker, filter.Name, t.Name), logthis.NORMAL)
 					continue
 				}
 				// checking if a filter is triggered
@@ -379,7 +377,7 @@ func ShowTorrentInfo(e *Environment, tracker *GazelleTracker, IDStrings []string
 }
 
 // Reseed a release using local files and tracker metadata
-func Reseed(tracker *GazelleTracker, path []string) error {
+func Reseed(t *tracker.Gazelle, path []string) error {
 	// get config.
 	conf, configErr := NewConfig(DefaultConfigurationFile)
 	if configErr != nil {
@@ -395,9 +393,9 @@ func Reseed(tracker *GazelleTracker, path []string) error {
 		return errors.Wrap(err, "error reading origin.json")
 	}
 	// check that tracker is in list of origins
-	oj, ok := toc.Origins[tracker.Name]
+	oj, ok := toc.Origins[t.Name]
 	if !ok {
-		return errors.New("release does not originate from tracker " + tracker.Name)
+		return errors.New("release does not originate from tracker " + t.Name)
 	}
 
 	// copy files if necessary
@@ -420,7 +418,7 @@ func Reseed(tracker *GazelleTracker, path []string) error {
 
 	// TODO TO A TEMP DIR, then compare torrent description with path contents; if OK only copy .torrent to conf.General.WatchDir
 	// downloading torrent
-	if err := tracker.DownloadTorrentFromID(strconv.Itoa(oj.ID), conf.General.WatchDir, false); err != nil {
+	if err := t.DownloadTorrentFromID(strconv.Itoa(oj.ID), conf.General.WatchDir, false); err != nil {
 		return errors.Wrap(err, "error downloading torrent file")
 	}
 	logthis.Info("Torrent downloaded, your bittorrent client should be able to reseed the release.", logthis.NORMAL)
@@ -428,9 +426,9 @@ func Reseed(tracker *GazelleTracker, path []string) error {
 }
 
 // CheckLog on a tracker's logchecker
-func CheckLog(tracker *GazelleTracker, logPaths []string) error {
+func CheckLog(t *tracker.Gazelle, logPaths []string) error {
 	for _, log := range logPaths {
-		score, err := tracker.GetLogScore(log)
+		score, err := t.GetLogScore(log)
 		if err != nil {
 			return errors.Wrap(err, errorGettingLogScore)
 		}
@@ -575,7 +573,7 @@ func automatedTasks(e *Environment) {
 	s.Every(1).Day().At("00:00").Do(ArchiveUserFiles)
 	// 2. a little later, also compress the git repository if gitlab pages are configured
 	if e.config.gitlabPagesConfigured {
-		s.Every(1).Day().At("00:05").Do(e.git.Compress)
+		s.Every(7).Day().At("00:15").Do(e.git.Compress)
 	}
 	// 3. check quota is available
 	_, err := exec.LookPath("quota")
@@ -599,7 +597,7 @@ func automatedTasks(e *Environment) {
 		s.Every(1).Hour().Do(checkFreeDiskSpace)
 	}
 	// 5. update database stats
-	s.Every(1).Day().At("00:10").Do(GenerateStats, e)
+	s.Every(1).Day().At("00:05").Do(GenerateStats, e)
 	// launch scheduler
 	<-s.Start()
 }

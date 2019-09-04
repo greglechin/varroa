@@ -1,12 +1,12 @@
 package varroa
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/catastrophic/assistance/logthis"
+	"gitlab.com/passelecasque/obstruction/tracker"
 )
 
 func TestGeneratePath(t *testing.T) {
@@ -20,7 +20,7 @@ func TestGeneratePath(t *testing.T) {
 	logthis.SetLevel(2)
 
 	// test API JSON responses
-	gt := &GazelleTorrent{}
+	gt := tracker.GazelleTorrent{}
 	gt.Response.Group.CatalogueNumber = "CATNUM Group"
 	gt.Response.Group.MusicInfo.Artists = []struct {
 		ID   int    `json:"id"`
@@ -54,67 +54,58 @@ func TestGeneratePath(t *testing.T) {
 	gt.Response.Torrent.LogScore = 100
 	gt.Response.Torrent.FileList = "01 - First.flac{{{26538426}}}|||02 - Second.flac{{{32109249}}}"
 
-	metadataJSONgt1, err := json.MarshalIndent(gt, "", "    ")
-	check.Nil(err)
+	gt2 := gt
+	gt2.Response.Torrent.Media = "CD"
 
-	gt.Response.Torrent.Media = "CD"
-	metadataJSONgt2, err := json.MarshalIndent(gt, "", "    ")
-	check.Nil(err)
+	gt3 := gt2
+	gt3.Response.Torrent.Format = "MP3"
+	gt3.Response.Torrent.Encoding = "V0 (VBR)"
+	gt3.Response.Torrent.RemasterTitle = "Bonus Tracks"
 
-	gt.Response.Torrent.Format = "MP3"
-	gt.Response.Torrent.Encoding = "V0 (VBR)"
-	gt.Response.Torrent.RemasterTitle = "Bonus Tracks"
-	metadataJSONgt3, err := json.MarshalIndent(gt, "", "    ")
-	check.Nil(err)
+	gt4 := gt3
+	gt4.Response.Torrent.Format = "FLAC"
+	gt4.Response.Torrent.Encoding = "24bit Lossless"
+	gt4.Response.Torrent.RemasterTitle = "Remaster"
+	gt4.Response.Torrent.Media = "Vinyl"
 
-	gt.Response.Torrent.Format = "FLAC"
-	gt.Response.Torrent.Encoding = "24bit Lossless"
-	gt.Response.Torrent.RemasterTitle = "Remaster"
-	gt.Response.Torrent.Media = "Vinyl"
-	metadataJSONgt4, err := json.MarshalIndent(gt, "", "    ")
-	check.Nil(err)
+	gt5 := gt4
+	gt5.Response.Torrent.Grade = "Gold"
+	gt5.Response.Torrent.Media = "CD"
+	gt5.Response.Torrent.Encoding = "Lossless"
 
-	gt.Response.Torrent.Grade = "Gold"
-	gt.Response.Torrent.Media = "CD"
-	gt.Response.Torrent.Encoding = "Lossless"
-	metadataJSONgt5, err := json.MarshalIndent(gt, "", "    ")
-	check.Nil(err)
+	gt6 := gt5
+	gt6.Response.Torrent.Grade = "Silver"
+	gt6.Response.Torrent.RemasterYear = 1987
+	gt6.Response.Torrent.RemasterTitle = "Promo"
+	gt6.Response.Group.ReleaseType = 1
 
-	gt.Response.Torrent.Grade = "Silver"
-	gt.Response.Torrent.RemasterYear = 1987
-	gt.Response.Torrent.RemasterTitle = "Promo"
-	gt.Response.Group.ReleaseType = 1
-	metadataJSONgt6, err := json.MarshalIndent(gt, "", "    ")
-	check.Nil(err)
+	gt7 := gt6
+	gt7.Response.Group.Name = "RELEASE 1 / RELEASE 2!!&éçà©§Ð‘®¢"
 
-	gt.Response.Group.Name = "RELEASE 1 / RELEASE 2!!&éçà©§Ð‘®¢"
-	metadataJSONgt7, err := json.MarshalIndent(gt, "", "    ")
-	check.Nil(err)
-
-	gt.Response.Group.Name = "\"Thing\""
-	metadataJSONgt8, err := json.MarshalIndent(gt, "", "    ")
-	check.Nil(err)
+	gt8 := gt7
+	gt8.Response.Group.Name = "\"Thing\""
 
 	// tracker
-	tracker := &GazelleTracker{Name: "BLUE", URL: "http://blue"}
+	gzTracker, err := tracker.NewGazelle("BLUE", "http://blue", "user", "password", "", "", userAgent())
+	check.Nil(err)
 
 	// torrent infos
 	infod2 := &TrackerMetadata{}
-	check.Nil(infod2.LoadFromTracker(tracker, metadataJSONgt1))
+	check.Nil(infod2.Load(gzTracker, &gt))
 	infod3 := &TrackerMetadata{}
-	check.Nil(infod3.LoadFromTracker(tracker, metadataJSONgt2))
+	check.Nil(infod3.Load(gzTracker, &gt2))
 	infod4 := &TrackerMetadata{}
-	check.Nil(infod4.LoadFromTracker(tracker, metadataJSONgt3))
+	check.Nil(infod4.Load(gzTracker, &gt3))
 	infod5 := &TrackerMetadata{}
-	check.Nil(infod5.LoadFromTracker(tracker, metadataJSONgt4))
+	check.Nil(infod5.Load(gzTracker, &gt4))
 	infod6 := &TrackerMetadata{}
-	check.Nil(infod6.LoadFromTracker(tracker, metadataJSONgt5))
+	check.Nil(infod6.Load(gzTracker, &gt5))
 	infod7 := &TrackerMetadata{}
-	check.Nil(infod7.LoadFromTracker(tracker, metadataJSONgt6))
+	check.Nil(infod7.Load(gzTracker, &gt6))
 	infod8 := &TrackerMetadata{}
-	check.Nil(infod8.LoadFromTracker(tracker, metadataJSONgt7))
+	check.Nil(infod8.Load(gzTracker, &gt7))
 	infod9 := &TrackerMetadata{}
-	check.Nil(infod9.LoadFromTracker(tracker, metadataJSONgt8))
+	check.Nil(infod9.Load(gzTracker, &gt8))
 
 	// checking GeneratePath
 	check.Equal("original_path", infod2.GeneratePath("", ""))
