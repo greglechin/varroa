@@ -42,7 +42,7 @@ require (
 	github.com/vmihailenco/msgpack v4.0.1+incompatible // indirect
 	github.com/wcharczuk/go-chart v2.0.1+incompatible
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	gitlab.com/catastrophic/assistance v0.15.0
+	gitlab.com/catastrophic/assistance v0.15.2
 	gitlab.com/catastrophic/go-ircevent v0.1.0
 	gitlab.com/passelecasque/obstruction v0.4.0
 	go.etcd.io/bbolt v1.3.0 // indirect
@@ -52,3 +52,5 @@ require (
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+go 1.13

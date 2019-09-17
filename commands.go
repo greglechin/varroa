@@ -561,7 +561,7 @@ func checkFreeDiskSpace(e *Environment) error {
 		}
 		return nil
 	}
-	return errors.New("download directory not configured, cannot check free disk space")
+	return errors.New("download directory not configured")
 }
 
 // automatedTasks is a list of cronjobs for maintenance, backup, or non-critical operations
@@ -573,16 +573,16 @@ func automatedTasks(e *Environment) {
 	s.Every(1).Day().At("00:00").Do(ArchiveUserFiles)
 	// 2. a little later, also compress the git repository if gitlab pages are configured
 	if e.config.gitlabPagesConfigured {
-		s.Every(7).Day().At("00:15").Do(e.git.Compress)
+		s.Every(7).Days().At("00:15").Do(e.git.Compress)
 	}
 	// 3. check quota is available
 	_, err := exec.LookPath("quota")
 	if err != nil {
-		logthis.Info("The command 'quota' is not available on this system, not able to check disk quota", logthis.NORMAL)
+		logthis.Info("warning: the command 'quota' is not available on this system, not able to check disk quota", logthis.NORMAL)
 	} else {
 		// first check
 		if err := checkQuota(e); err != nil {
-			logthis.Error(errors.Wrap(err, "error checking user quota: quota usage monitoring off"), logthis.NORMAL)
+			logthis.Error(errors.Wrap(err, "warning: quota usage monitoring off"), logthis.NORMAL)
 		} else {
 			// scheduler for subsequent quota checks
 			s.Every(1).Hour().Do(checkQuota)
@@ -591,7 +591,7 @@ func automatedTasks(e *Environment) {
 	// 4. check disk space is available
 	// first check
 	if err := checkFreeDiskSpace(e); err != nil {
-		logthis.Error(errors.Wrap(err, "error checking free disk space: disk usage monitoring off"), logthis.NORMAL)
+		logthis.Error(errors.Wrap(err, "warning: disk usage monitoring off"), logthis.NORMAL)
 	} else {
 		// scheduler for subsequent quota checks
 		s.Every(1).Hour().Do(checkFreeDiskSpace)

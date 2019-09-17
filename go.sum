@@ -114,6 +114,8 @@ github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 h1:nIPpBwaJSVYIxUFsDv3M8ofm
 github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8/go.mod h1:HUYIGzjTL3rfEspMxjDjgmT5uz5wzYJKVo23qUhYTos=
 gitlab.com/catastrophic/assistance v0.15.0 h1:OXF4DqHi5gOo2fjvUOHsgS0ke8Ho8+ScyR90Rzt6iZY=
 gitlab.com/catastrophic/assistance v0.15.0/go.mod h1:MIoOhGYRZBC+JDBGVCpYRsI36+QxOBRUzhhY+AAeh+c=
+gitlab.com/catastrophic/assistance v0.15.2 h1:/q6ElB7aE2R6fjjf10QxwHTOs7eBwLK9/r4YAc19e70=
+gitlab.com/catastrophic/assistance v0.15.2/go.mod h1:z6MRe4R0GMZmKfy17XJosFjYHTc0udUWY+bVmUk2rFQ=
 gitlab.com/catastrophic/go-ircevent v0.1.0 h1:EDhKUme2azLuqCizqidV1A8RP28ZQxhdBE/QXFRXhJw=
 gitlab.com/catastrophic/go-ircevent v0.1.0/go.mod h1:2AAsdhGai9b39JJgFhNPNetp4JBc8aI1siZt3AAej9I=
 gitlab.com/catastrophic/gotabulate v0.0.0-20190228104527-d3d77fbbb3a1 h1:nKQdLjYLARydXRsNOfHxTB0TaOZdKpp3a/P6dc3ySCE=

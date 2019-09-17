@@ -184,7 +184,7 @@ func (e *Environment) DeployToGitlabPages() error {
 	}
 	// add the graphs, if it fails,
 	if err := e.git.Add("*" + svgExt); err != nil {
-		logthis.Error(errors.Wrap(err, errorGitAdd+", not all graphs are generated yet."), logthis.NORMAL)
+		logthis.Error(errors.Wrap(err, errorGitAdd+", not all graphs are generated yet."), logthis.VERBOSEST)
 	}
 	// commit
 	if err := e.git.Commit("varroa musica stats update."); err != nil {
