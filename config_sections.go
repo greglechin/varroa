@@ -105,6 +105,9 @@ type ConfigAutosnatch struct {
 	IRCSSLSkipVerify      bool   `yaml:"irc_ssl_skip_verify"`
 	NickservPassword      string `yaml:"nickserv_password"`
 	BotName               string `yaml:"bot_name"`
+	UseZNC                bool   `yaml:"use_znc"`
+	ZNCNetwork            string `yaml:"znc_network"`
+	ZNCPassword           string `yaml:"znc_password"`
 	Announcer             string
 	AnnounceChannel       string   `yaml:"announce_channel"`
 	BlacklistedUploaders  []string `yaml:"blacklisted_uploaders"`
