@@ -138,7 +138,19 @@ func ircHandler(e *Environment, t *tracker.Gazelle) {
 		logthis.Info("Cannot find autosnatch configuration for tracker "+t.Name, logthis.NORMAL)
 		return
 	}
-	IRCClient := irc.IRC(autosnatchConfig.BotName, t.User)
+	var IRCClient *irc.Connection
+
+	if autosnatchConfig.UseZNC {
+		zncUser := autosnatchConfig.BotName
+		zncNetwork := autosnatchConfig.ZNCNetwork
+		zncPassword := autosnatchConfig.ZNCPassword
+		zncNickname := fmt.Sprintf("%s/%s", zncUser, zncNetwork)
+		IRCClient = irc.IRC(zncUser, zncNickname)
+		IRCClient.Password = zncPassword
+
+	} else {
+		IRCClient = irc.IRC(autosnatchConfig.BotName, t.User)
+	}
 	if autosnatchConfig.LocalAddress != "" {
 		IRCClient.LocalAddress = autosnatchConfig.LocalAddress
 	}
