@@ -2,20 +2,19 @@
 // @name           varroa musica
 // @namespace      varroa
 // @description    Adds a VM link for each torrent, to send directly to varroa musica.
-// @include        http*://*redacted.ch/*
-// @include        http*://*notwhat.cd/*
-// @include        http*://*apollo.rip/*
+// @include        http*://*redacted.sh/*
+// @include        http*://*orpheus.network/*
 // @version        34.0
 // @date           2020-06
 // @grant          GM.getValue
 // @grant          GM.setValue
 // @grant          GM.notification
 // @require        https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
-// @require        https://redacted.ch/static/functions/jquery.js
-// @require        https://redacted.ch/static/functions/noty/noty.js
-// @require        https://redacted.ch/static/functions/noty/layouts/bottomRight.js
-// @require        https://redacted.ch/static/functions/noty/themes/default.js
-// @require        https://redacted.ch/static/functions/user_notifications.js
+// @require        https://redacted.sh/static/functions/jquery.js
+// @require        https://redacted.sh/static/functions/noty/noty.js
+// @require        https://redacted.sh/static/functions/noty/layouts/bottomRight.js
+// @require        https://redacted.sh/static/functions/noty/themes/default.js
+// @require        https://redacted.sh/static/functions/user_notifications.js
 // ==/UserScript==
 
 (async function () {
