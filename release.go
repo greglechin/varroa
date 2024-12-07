@@ -63,7 +63,7 @@ type Release struct {
 }
 
 func NewRelease(trackerName string, parts []string, alternative bool) (*Release, error) {
-	if len(parts) != 19 {
+	if len(parts) != 20 {
 		return nil, errors.New("incomplete announce information")
 	}
 
