@@ -73,11 +73,11 @@ func NewRelease(trackerName string, parts []string, alternative bool) (*Release,
 	rg := regexp.MustCompile(pattern)
 
 	if alternative {
-		tags = strings.Split(parts[16], ",")
-		torrentURL = parts[18]
+		tags = strings.Split(parts[17], ",")
+		torrentURL = parts[19]
 	} else {
-		tags = strings.Split(parts[18], ",")
-		torrentURL = parts[17]
+		tags = strings.Split(parts[19], ",")
+		torrentURL = parts[18]
 	}
 
 	// getting torrentID
